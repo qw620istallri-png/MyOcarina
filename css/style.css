@@ -262,3 +262,20 @@ dialog.sheet { max-width: min(1100px, calc(100vw - 16px)); width: 100%; max-heig
   .sheet-body { max-height: none; overflow: visible; }
   .cell { break-inside: avoid; }
 }
+
+/* morceau précédent / suivant */
+.icon-btn.nav-song { font-size: 16px; background: #e9f4d8; }
+.icon-btn.nav-song[hidden] { display: none; }
+@media (max-width: 520px) {
+  .topbar { gap: 6px; }
+  .icon-btn.nav-song { width: 36px; height: 40px; font-size: 14px; }
+  .song-title b { font-size: 18px; }
+}
+/* frise cliquable */
+#track-inner .tile[role="button"] { cursor: pointer; }
+#track-inner .tile[role="button"]:hover { filter: brightness(1.08); transform: translateY(-2px); }
+#track-inner .tile[role="button"]:focus-visible { outline: 3px solid #f2c94c; outline-offset: 1px; }
+#track-inner .tile.picked { animation: picked .6s ease-out; }
+@keyframes picked { 0% { transform: scale(1.25); box-shadow: 0 0 0 4px #f2c94c; } 100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; } }
+.song-title.pop { animation: titlein .4s ease-out; }
+@keyframes titlein { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }

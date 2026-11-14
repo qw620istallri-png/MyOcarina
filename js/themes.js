@@ -5,8 +5,40 @@
 //  onNote : petite réaction du décor à chaque note jouée
 // =====================================================================
 (function () {
+  // ---------------------------------------------------- images de décor (CC0, voir assets/bg/CREDITS.txt)
+  const IMG = {};
+  const BG_FILES = ["road-sky", "road-forest", "road-tree", "road-ground", "gold-back", "gold-middle", "gold-front", "gold-lights",
+    "dusk-sky", "dusk-far", "dusk-mountains", "dusk-trees", "sunset-sky1", "sunset-cloud1",
+    "sunset-cloud4", "sunset-mount1", "pass-1", "pass-2", "pass-3", "sunny-sky"];
+  function img(name) {
+    let i = IMG[name];
+    if (!i) { i = IMG[name] = new Image(); i.src = "assets/bg/" + name + ".png"; }
+    return i;
+  }
+  BG_FILES.forEach(img);
+  window.BG_FILES = BG_FILES;
+
   // ---------------------------------------------------- briques de décor
   const B = {
+    // une couche d'image, répétée horizontalement, qui peut défiler doucement (parallaxe)
+    // o : { x, y, speed (px/s), sx, sy, sw, sh (découpe), once (pas de répétition), alpha }
+    layer(S, name, o = {}) {
+      const im = img(name);
+      if (!im.complete || !im.naturalWidth) return false;
+      const sc = S.scale, sx = o.sx || 0, sy = o.sy || 0;
+      const w = o.sw || im.naturalWidth - sx, h = o.sh || im.naturalHeight - sy;
+      const y = Math.round(o.y || 0);
+      const ctx = S.ctx;
+      if (o.alpha != null) ctx.globalAlpha = o.alpha;
+      let x = (o.x || 0) - (o.speed ? S.t * o.speed : 0);
+      if (o.once) ctx.drawImage(im, sx, sy, w, h, Math.round(x) * sc, y * sc, w * sc, h * sc);
+      else {
+        x = (((Math.round(x) % w) + w) % w) - w;
+        for (; x < S.W; x += w) ctx.drawImage(im, sx, sy, w, h, x * sc, y * sc, w * sc, h * sc);
+      }
+      ctx.globalAlpha = 1;
+      return true;
+    },
     sky(S, cols) {
       cols.forEach((c, i) => S.px(0, i * 10, S.W, 10, c));
       S.px(0, cols.length * 10, S.W, 40, cols[cols.length - 1]);
@@ -195,7 +227,7 @@
       draw(S, dt) {
         B.sky(S, ["#7ec8e3", "#9bd4e6", "#b7dfe6", "#d4e8df", "#f3e9c9", "#f8dcae"]);
         B.sun(S, 158, 14, undefined, undefined, S.pulse);
-        B.clouds(S, dt);
+        if (!B.layer(S, "sunny-sky", { y: -40, speed: 1.2 })) B.clouds(S, dt);
         B.hills(S, 58, 5, 23, 0, "#8cc56c"); B.hills(S, 70, 4, 31, 2, "#6bb055");
         [[18, 52], [40, 56], [176, 54]].forEach(([x, y]) => B.tree(S, x, y, undefined, undefined, undefined, 0.5));
         B.house(S, 140, 66);
@@ -212,13 +244,17 @@
       outfit: {},
       draw(S, dt) {
         B.sky(S, ["#2e5a4a", "#346650", "#3d7356", "#4a805c", "#5a8f62", "#6a9c66"]);
-        for (let i = 0; i < 6; i++) S.px(20 + i * 34, 0, 6, 88, `rgba(255,250,200,${0.06 + 0.05 * Math.sin(S.t + i) + S.pulse * .06})`);
-        [[-6, 18], [40, 26], [140, 20], [176, 14]].forEach(([x, y]) => B.bigTree(S, x, y, "#2f6b3a", "#3f8a3a", "#5a3a22"));
-        B.hills(S, 74, 3, 17, 1, "#3f7a40");
-        [[62, 62], [112, 66], [126, 60]].forEach(([x, y]) => B.tree(S, x, y, "#3f8a3a", "#5aa64a", "#5a3a22", 0.4));
-        B.ground(S, "#4a8a3e", "#3a7432");
-        // champignons
-        [[30, 92], [168, 96], [150, 90]].forEach(([x, y]) => { S.px(x, y, 5, 2, "#d24b3e"); S.px(x + 1, y + 2, 3, 2, "#efe2c4"); S.px(x + 1, y, 1, 1, "#fff"); });
+        if (B.layer(S, "road-sky", { y: -20, speed: 1.5 }) && B.layer(S, "road-forest", { y: -66 })) {
+          B.layer(S, "road-tree", { x: 128, y: -96, once: true });
+          B.layer(S, "road-tree", { x: -34, y: -84, once: true });
+          B.layer(S, "road-tree", { x: 158, y: -78, once: true });
+          for (let i = 0; i < 4; i++) S.px(50 + i * 30, 0, 5, 84, `rgba(255,250,200,${0.05 + 0.04 * Math.sin(S.t + i) + S.pulse * .06})`);
+          [[30, 92], [178, 94]].forEach(([x, y]) => { S.px(x, y, 5, 2, "#d24b3e"); S.px(x + 1, y + 2, 3, 2, "#efe2c4"); S.px(x + 1, y, 1, 1, "#fff"); });
+          B.layer(S, "road-ground", { sx: 32, sy: 5, sw: 64, sh: 40, y: 88 });
+        } else {
+          [[-6, 18], [40, 26], [140, 20], [176, 14]].forEach(([x, y]) => B.bigTree(S, x, y, "#2f6b3a", "#3f8a3a", "#5a3a22"));
+          B.ground(S, "#4a8a3e", "#3a7432");
+        }
         B.flies(S, dt, "200,255,170", S.pulse);
       },
       weather: "leaves",
@@ -253,8 +289,12 @@
         B.sky(S, ["#1d2850", "#24305c", "#2c3a68", "#364575", "#415182", "#4d5d8e"]);
         B.stars(S, 40); B.moon(S, 28, 10);
         B.castle(S, 120, 34, "#2a3050", "#ffe9a3");
-        B.hills(S, 70, 4, 29, 1, "#2f4a46"); B.hills(S, 78, 3, 21, 3, "#28403c");
-        B.ground(S, "#2f5a3e", "#284e36");
+        if (B.layer(S, "pass-1", { y: 34, alpha: 0.35 })) {
+          B.layer(S, "pass-2", { y: 46, x: 40, alpha: 0.9 });
+          S.px(0, 80, S.W, 32, "rgba(20,26,50,.35)");
+          B.layer(S, "pass-3", { y: 60, x: 90 });
+          B.ground(S, "#1e2a2e", "#18222a", 90);
+        } else { B.hills(S, 70, 4, 29, 1, "#2f4a46"); B.hills(S, 78, 3, 21, 3, "#28403c"); B.ground(S, "#2f5a3e", "#284e36"); }
         B.flies(S, dt, "180,220,255", S.pulse);
       },
       weather: "sparkles",
@@ -267,7 +307,7 @@
       draw(S, dt) {
         B.sky(S, ["#f6b47a", "#f7c088", "#f8cc98", "#f6d6a6", "#f2ddb2", "#eddfbc"]);
         B.sun(S, 140, 44, "#ffcf70", "#fff0b0", S.pulse);
-        B.clouds(S, dt, "#ffd9b8", "#f0bfa0");
+        if (!B.layer(S, "sunset-cloud4", { y: -4, speed: 1.5, alpha: 0.85 })) B.clouds(S, dt, "#ffd9b8", "#f0bfa0");
         B.hills(S, 66, 4, 27, 0, "#b4b860"); B.hills(S, 76, 3, 35, 2, "#98a850");
         B.ground(S, "#8ea04a", "#7a8c40"); B.fence(S, 0, 200);
         // cheval qui broute (silhouette)
@@ -332,8 +372,12 @@
       costume: "bandana",
       draw(S, dt) {
         B.sky(S, ["#6ec0ec", "#86cbee", "#9ed6f0", "#b4e0f0", "#c8e8ee", "#d8eeec"]);
-        B.sun(S, 160, 12, undefined, undefined, S.pulse); B.clouds(S, dt);
-        B.water(S, 60, "#2f7ec4", "#bfe6ff", "#5aa0e0");
+        if (B.layer(S, "sunny-sky", { y: -62, speed: 1.2 })) {
+          for (let row = 0; row < 6; row++) for (let x = 0; x < S.W; x += 14) {
+            const xx = (x + S.t * (4 + row * 2) + row * 9) % (S.W + 14) - 7;
+            S.px(xx, 62 + row * 4, 4, 1, "rgba(255,255,255,.55)");
+          }
+        } else { B.sun(S, 160, 12, undefined, undefined, S.pulse); B.clouds(S, dt); B.water(S, 60, "#2f7ec4", "#bfe6ff", "#5aa0e0"); }
         // petite île
         S.px(20, 56, 30, 6, "#e6d29a"); B.tree(S, 30, 41, "#3f8a3a", "#5aa64a", "#7a4b28", 1);
         // bateau
@@ -366,9 +410,9 @@
       draw(S, dt) {
         B.sky(S, ["#86c4ea", "#9ccff0", "#b2daf0", "#c6e2ec", "#d8e8e4", "#e6ecd8"]);
         B.clouds(S, dt);
-        B.house(S, 8, 60, "#d8b88a", "#4a6ab0"); B.house(S, 40, 54, "#e2cba0", "#b8453a"); B.house(S, 126, 58, "#cfae80", "#5a9a4a"); B.house(S, 166, 62, "#d8b88a", "#c98c3a");
-        S.px(0, 88, 200, 24, "#c8b89a");
-        for (let x = 0; x < 200; x += 10) for (let y = 88; y < 112; y += 6) S.px(x + ((y / 6) % 2) * 5, y, 9, 5, "#bba98a");
+        { B.house(S, 8, 60, "#d8b88a", "#4a6ab0"); B.house(S, 40, 54, "#e2cba0", "#b8453a"); B.house(S, 126, 58, "#cfae80", "#5a9a4a"); B.house(S, 166, 62, "#d8b88a", "#c98c3a"); }
+        S.px(0, 90, 200, 22, "#c8b89a");
+        for (let x = 0; x < 200; x += 10) for (let y = 90; y < 112; y += 6) S.px(x + ((y / 6) % 2) * 5, y, 9, 5, "#bba98a");
         // fanions
         for (let i = 0; i < 20; i++) S.px(i * 10 + 2, 46 + Math.abs(10 - i) * 0.6 + Math.round(Math.sin(S.t * 3 + i)), 4, 3, ["#d24b3e", "#f2c94c", "#4f9e40", "#5b8fe0"][i % 4]);
       },
@@ -381,7 +425,8 @@
       costume: "hobbit",
       draw(S, dt) {
         B.sky(S, ["#8fcaea", "#a6d4ec", "#bcdeec", "#cfe6e6", "#e0ecdc", "#ecefd0"]);
-        B.sun(S, 166, 12, undefined, undefined, S.pulse); B.clouds(S, dt);
+        B.sun(S, 166, 12, undefined, undefined, S.pulse);
+        if (!B.layer(S, "sunny-sky", { y: -44, x: 120, speed: 1 })) B.clouds(S, dt);
         B.hills(S, 60, 6, 30, 1, "#8cc56c");
         B.hobbitHole(S, 132, 60);
         B.tree(S, 20, 54, "#4a9a3a", "#6aba4a", "#7a4b28", 0.5); B.bigTree(S, 34, 30, "#3f8a3a", "#5aa64a", "#6a4a2a");
@@ -398,11 +443,19 @@
       draw(S, dt) {
         S.skyTop = "#20284a";
         B.sky(S, ["#20284a", "#283256", "#323d62", "#3d486e", "#48547a", "#546086"]);
-        B.stars(S, 30, 7); B.moon(S, 160, 8);
-        B.mountains(S, 70, "#4a5070", "#e8eef8");
-        B.hills(S, 76, 3, 21, 1, "#38405e");
-        [[10, 70], [30, 72], [160, 70], [182, 74]].forEach(([x, y]) => B.pine(S, x, y, "#2a3a4a", "#e8eef8"));
-        B.ground(S, "#dfe6f2", "#c8d2e4");
+        if (B.layer(S, "dusk-sky", { y: -10, x: 40 })) {
+          B.stars(S, 14, 7);
+          B.layer(S, "dusk-far", { y: -42, x: -60, speed: 0.3 });
+          B.layer(S, "dusk-mountains", { y: -46, speed: 0.6 });
+          B.layer(S, "dusk-trees", { y: -48, speed: 1 });
+          B.ground(S, "#3a2a44", "#2e2238", 90);
+          for (let x = 0; x < S.W; x += 7) S.px(x + ((x * 13) % 5), 92 + ((x * 7) % 14), 2, 1, "rgba(232,224,240,.5)");
+        } else {
+          B.stars(S, 30, 7); B.moon(S, 160, 8);
+          B.mountains(S, 70, "#4a5070", "#e8eef8");
+          [[10, 70], [30, 72], [160, 70], [182, 74]].forEach(([x, y]) => B.pine(S, x, y, "#2a3a4a", "#e8eef8"));
+          B.ground(S, "#dfe6f2", "#c8d2e4");
+        }
         // feu de camp
         const f = 0.6 + 0.4 * Math.sin(S.t * 12) + S.pulse * .3;
         S.px(150, 94, 12, 2, "#5a3a22"); S.px(153, 88 - f * 3, 6, 6 + f * 3, "#ff9a3a"); S.px(155, 90 - f * 2, 2, 4 + f * 2, "#ffe07a");
@@ -412,10 +465,17 @@
     },
     // étoile du soir (elfique, crépuscule)
     elfique: {
-      nom: "Fondcombe",
+      nom: "La forêt dorée",
       costume: "elfe",
       draw(S, dt) {
         S.skyTop = "#2c2a5a";
+        if (B.layer(S, "gold-back", { y: -40, speed: 0.4 })) {
+          B.layer(S, "gold-lights", { y: -6, x: 20, alpha: 0.55 + 0.25 * Math.sin(S.t * 0.8) + S.pulse * 0.2 });
+          B.layer(S, "gold-middle", { y: -44, speed: 0.8 });
+          B.layer(S, "gold-front", { y: 70, x: -50, sy: 120, sh: 40 });
+          B.flies(S, dt, "255,236,170", S.pulse);
+          return;
+        }
         B.sky(S, ["#2c2a5a", "#3c3670", "#564488", "#7a5296", "#a0649c", "#c07a9a"]);
         B.stars(S, 30, 5);
         // cascade
@@ -426,7 +486,7 @@
         B.ground(S, "#3a5a5a", "#2f4e4e");
         B.flies(S, dt, "200,220,255", S.pulse);
       },
-      weather: "sparkles",
+      weather: "leaves",
       outfit: { h: "#f0d888", H: "#c8a858", g: "#dfe6f4", G: "#aab4cc", r: "#8a9ac8", R: "#5a6a98", y: "#c0c8d8", n: "#c8d0e4", N: "#9aa4bc" },
     },
     // vers l'ouest : port au couchant
@@ -435,8 +495,15 @@
       costume: "capuche",
       draw(S, dt) {
         B.sky(S, ["#f0a070", "#f2b080", "#f4c090", "#f2cca0", "#eed4b0", "#e8d8c0"]);
-        B.sun(S, 92, 50, "#ffd080", "#fff0c0", S.pulse);
-        B.water(S, 62, "#5a7ab0", "#ffd8a8", "#8aa0c8");
+        if (B.layer(S, "sunset-sky1", { y: -58 })) {
+          B.layer(S, "sunset-cloud1", { y: -30, speed: 2 });
+          B.sun(S, 40, 46, "#ffd080", "#fff0c0", S.pulse);
+          B.layer(S, "sunset-mount1", { y: -38, x: 60 });
+          B.water(S, 62, "#5a3a8a", "#ffb070", "#8a5aa8");
+        } else {
+          B.sun(S, 92, 50, "#ffd080", "#fff0c0", S.pulse);
+          B.water(S, 62, "#5a7ab0", "#ffd8a8", "#8aa0c8");
+        }
         // navire elfique blanc
         const bx = 120 + Math.sin(S.t * 0.5) * 3, by = 54;
         for (let i = 0; i < 6; i++) S.px(bx + i, by + 6 + i * 0.5, 34 - i * 2, 1, "#f2f2f2");

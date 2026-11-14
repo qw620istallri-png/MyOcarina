@@ -125,15 +125,7 @@
       else {
         c.className = "cell";
         c.innerHTML = `${chartSVG(n.midi)}<span>${nameOf(n.midi)}</span><small>${M.octaveLabel(n.midi) === "aigu" ? "aigu" : n.dur >= 2 ? "long" : n.dur < 1 ? "court" : ""}</small>`;
-        c.onclick = () => {
-          stopDemo(); game.running = false;
-          game.idx = i; game.stableMidi = null; game.needRelease = false;
-          if (game.mode === "free") setMode("follow");
-          $("#btn-start").textContent = game.mode === "listen" ? "▶ Écouter" : "▶ Reprendre";
-          updateCards(); markSheet();
-          $("#sheet").close();
-          say(`On reprend à ${nameOf(n.midi)}. Appuie sur « Reprendre ».`);
-        };
+        c.onclick = () => { $("#sheet").close(); jumpTo(i); };
       }
       line.appendChild(c);
     });
@@ -210,6 +202,7 @@
     }
     $("#play-title").textContent = song.titre;
     $("#play-sub").textContent = song.sous || "";
+    updateSongNav();
     show("play");
     setMode(game.notes.length ? "follow" : "free");
     scene.resize();
@@ -221,6 +214,7 @@
     game.notes = [];
     $("#play-title").textContent = game.song.titre;
     $("#play-sub").textContent = game.song.sous;
+    updateSongNav();
     show("play");
     setMode("free");
     scene.resize();
@@ -274,6 +268,10 @@
       t.style.minWidth = Math.round(26 + n.dur * 16) + "px";
       t.dataset.i = i;
       if (n.midi != null) {
+        t.setAttribute("role", "button"); t.tabIndex = 0;
+        t.title = "Aller à cette note et voir son doigté";
+        t.onclick = () => jumpTo(i);
+        t.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jumpTo(i); } };
         const h = 8 + (n.midi - 67) * 1.7;
         t.innerHTML = `<div class="bar" style="bottom:${h}px;height:6px;background:${window.NOTE_COLORS[n.midi % 12]}"></div><span>${nameOf(n.midi).replace("♯", "#")}</span>`;
       } else t.innerHTML = "<span>·</span>";
@@ -283,7 +281,7 @@
   function updateTrack() {
     $$("#track-inner .tile").forEach((t) => {
       const i = +t.dataset.i;
-      if (i < game.idx && !t.classList.contains("done") && game.lastShown != null) { t.classList.add("just"); setTimeout(() => t.classList.toggle("just", false), 520); }
+      if (i < game.idx && !t.classList.contains("done") && game.lastShown != null && !game.jumping) { t.classList.add("just"); setTimeout(() => t.classList.toggle("just", false), 520); }
       t.classList.toggle("done", i < game.idx);
       t.classList.toggle("cur", i === game.idx);
       t.classList.toggle("miss", game.misses.has(i));
@@ -293,6 +291,60 @@
       const tr = $("#track");
       tr.scrollLeft = cur.offsetLeft - tr.clientWidth / 2 + cur.clientWidth / 2;
     }
+  }
+
+  // Aller directement à une note (frise ou partition) : on montre son doigté,
+  // on la fait entendre, et on reprend de là.
+  function jumpTo(i) {
+    const n = game.notes[i];
+    if (!n || n.midi == null) return;
+    const wasListening = game.mode === "listen" && !!game.demoTimer;
+    stopDemo(); game.running = false;
+    if (game.mode === "free") setMode("follow");
+    game.idx = i; game.stableMidi = null; game.needRelease = false; game.reported = false;
+    game.jumping = true; updateCards(); game.jumping = false;
+    if ($("#sheet").open) markSheet();
+    $(`#track-inner .tile[data-i="${i}"]`)?.classList.add("picked");
+    setTimeout(() => $$("#track-inner .tile.picked").forEach((t) => t.classList.toggle("picked", false)), 600);
+    if (wasListening) { startListen(i); return; }
+    audio();
+    synth.note(n.midi + octShift(), ctx.currentTime + 0.03, Math.min(1.2, 0.45 + n.dur * 0.3));
+    scene.emit(n.midi); scene.set("play");
+    clearTimeout(game.jumpT); game.jumpT = setTimeout(() => { if (!game.running && !game.demoTimer) scene.set("idle"); }, 900);
+    if (game.mode === "listen") {
+      $("#btn-start").textContent = "▶ Écouter d'ici";
+      say(`Voilà le ${nameOf(n.midi)}. « Écouter d'ici » rejoue la suite à partir de là.`);
+    } else {
+      $("#btn-start").textContent = "▶ Reprendre";
+      say(`Voilà comment faire ce ${nameOf(n.midi)}. Appuie sur « Reprendre » pour jouer à partir d'ici.`);
+    }
+  }
+
+  // Morceau précédent / suivant dans la même catégorie
+  function songList() {
+    if (!game.song || !game.song.id) return [];
+    return allSongs().filter((x) => x.cat === game.song.cat);
+  }
+  function neighbourSong(dir) {
+    const list = songList();
+    if (list.length < 2) return null;
+    const k = list.findIndex((x) => x.id === game.song.id);
+    return list[(k + dir + list.length) % list.length];
+  }
+  function updateSongNav() {
+    const nx = neighbourSong(1), pv = neighbourSong(-1);
+    $("#btn-next-song").hidden = !nx; $("#btn-prev-song").hidden = !pv;
+    if (nx) $("#btn-next-song").title = "Morceau suivant : " + nx.titre;
+    if (pv) $("#btn-prev-song").title = "Morceau précédent : " + pv.titre;
+  }
+  function goSong(dir) {
+    const s2 = neighbourSong(dir);
+    if (!s2) return;
+    const keep = game.mode === "listen" ? "listen" : null;
+    stopAll();
+    openSong(s2);
+    if (keep) setMode(keep);
+    restart($(".song-title"), "pop");
   }
 
   function noteAt(i) { const j = firstNoteIdx(i); return j < game.notes.length ? game.notes[j] : null; }
@@ -536,22 +588,29 @@
     scene.set("idle");
   }
 
+  function startListen(from) {
+    $("#btn-start").textContent = "⏹ Stop";
+    scene.set("play");
+    if (from) say(`J'écoute à partir de ${nameOf(game.notes[from].midi)}…`);
+    playDemo(game.notes.slice(from), {
+      tempo: game.song.tempo, speed: settings.tempo / 100,
+      onNote: (k) => {
+        const i = from + k;
+        game.idx = i; updateCards();
+        const n = game.notes[i];
+        if (n.midi != null) { scene.emit(n.midi); scene.set("play"); }
+      },
+      onEnd: () => { scene.set("happy"); game.idx = game.notes.length; updateCards(); $("#btn-start").textContent = "▶ Écouter"; },
+    });
+  }
+
   async function onStart() {
     audio();
     if (game.mode === "listen") {
       if (game.demoTimer) { stopAll(); $("#btn-start").textContent = "▶ Écouter"; return; }
-      resetGame();
-      $("#btn-start").textContent = "⏹ Stop";
-      scene.set("play");
-      playDemo(game.notes, {
-        tempo: game.song.tempo, speed: settings.tempo / 100,
-        onNote: (i) => {
-          game.idx = i; updateCards();
-          const n = game.notes[i];
-          if (n.midi != null) { scene.emit(n.midi); scene.set("play"); }
-        },
-        onEnd: () => { scene.set("happy"); game.idx = game.notes.length; updateCards(); $("#btn-start").textContent = "▶ Écouter"; },
-      });
+      const from = game.idx > firstNoteIdx(0) && game.idx < game.notes.length ? game.idx : 0;
+      if (!from) resetGame();
+      startListen(from);
       return;
     }
     if (game.mode === "free") {
@@ -660,6 +719,8 @@
   $("#btn-new-song").onclick = () => openEditor(null);
   $("#btn-back").onclick = () => { stopAll(); if (!recorder.on) stopMic(); show("home"); renderSongs(); };
   $$(".mode").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
+  $("#btn-next-song").onclick = () => goSong(1);
+  $("#btn-prev-song").onclick = () => goSong(-1);
   $("#btn-start").onclick = onStart;
   $("#btn-restart").onclick = () => { const m = game.mode; setMode(m); if (m !== "free") onStart(); };
   $("#btn-hint").onclick = () => {

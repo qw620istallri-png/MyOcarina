@@ -1,0 +1,17 @@
+Décors (images) — toutes sous licence CC0 / domaine public, trouvées sur OpenGameArt.org.
+Merci aux artistes !
+
+- road-*.png       « Magical Road Pixel Art Environment » — Luis Zuno (ansimuz)
+                   https://opengameart.org/content/magical-road-pixel-art-environment
+- gold-*.png       « Forest Background » (parallax forest pack) — Luis Zuno (ansimuz)
+                   https://opengameart.org/content/forest-background
+- dusk-*.png       « Mountain at Dusk Background » — Luis Zuno (ansimuz)
+                   https://opengameart.org/content/mountain-at-dusk-background
+- sunny-sky.png    « Sunny Land 2D Pixel Art Pack » — Luis Zuno (ansimuz)
+                   https://opengameart.org/content/sunny-land-2d-pixel-art-pack
+- sunset-*.png     « Background Clouds And Mountains Parallax » — FabinhoSC
+                   https://opengameart.org/content/background-clouds-and-mountains-parallax
+- pass-*.png       « Forest Pass » — Blackwolfdave
+                   https://opengameart.org/content/forest-pass
+
+Le héros, les costumes, l'ocarina et les autres décors sont dessinés à la main pour cette appli.

@@ -16,3 +16,5 @@ Les doigtés sont dans `js/music.js` (`FINGERINGS`).
 
 ## Crédits
 Les grands morceaux viennent des tablatures d'[OcWalk](https://www.ocwalk.com), converties par `tools/convert-ocwalk.py` (rythme approximatif). Usage privé.
+
+Décors peints : images CC0 d'OpenGameArt (ansimuz, FabinhoSC, Blackwolfdave), détail dans `assets/bg/CREDITS.txt`.
