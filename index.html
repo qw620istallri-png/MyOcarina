@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Le Carnet d'Ocarina</title>
+<meta name="description" content="Apprendre l'ocarina 12 trous en s'amusant : l'appli écoute, montre les doigtés et suit la mélodie.">
+<meta name="theme-color" content="#6b4223">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ocarina">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============================== ACCUEIL ============================== -->
+<section id="home" class="screen active">
+  <header class="sign">
+    <canvas id="logo-hero" class="logo-hero" aria-hidden="true"></canvas>
+    <div>
+      <h1>Le Carnet d'Ocarina</h1>
+      <p class="tagline">Ocarina traversier 11 trous en Do · joue, écoute, progresse</p>
+    </div>
+    <button class="icon-btn" id="btn-settings" aria-label="Réglages">⚙</button>
+  </header>
+
+  <nav class="tabs" id="cat-tabs" role="tablist"></nav>
+  <div class="panel song-list" id="song-list"></div>
+
+  <div class="home-tools">
+    <button class="btn" id="btn-tuner">🎯 Accordeur &amp; doigtés</button>
+    <button class="btn" id="btn-new-song">✏️ Ajouter une mélodie</button>
+  </div>
+  <p class="footnote">Astuce : sur téléphone, « Ajouter à l'écran d'accueil » pour l'avoir comme une vraie appli, même hors-ligne.</p>
+</section>
+
+<!-- ============================== JEU ============================== -->
+<section id="play" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="btn-back" aria-label="Retour">◀</button>
+    <div class="song-title"><b id="play-title">—</b><small id="play-sub"></small></div>
+    <button class="icon-btn" id="btn-settings2" aria-label="Réglages">⚙</button>
+  </div>
+
+  <div class="modes" role="tablist">
+    <button class="mode" data-mode="listen">👂 Écouter</button>
+    <button class="mode" data-mode="follow">🎶 Jouer avec moi</button>
+    <button class="mode" data-mode="free">🎯 Libre</button>
+  </div>
+
+  <div class="stage">
+    <div class="scene-wrap frame">
+      <canvas id="scene"></canvas>
+      <div class="bubble" id="bubble" hidden></div>
+      <div class="score-badge" id="score-badge" hidden></div>
+    </div>
+
+    <div class="notes-row">
+      <div class="card now frame">
+        <div class="card-label" id="now-label">Maintenant</div>
+        <div class="note-big" id="now-name">—</div>
+        <div class="note-oct" id="now-oct"></div>
+        <div class="fing" id="now-fing"></div>
+      </div>
+      <div class="card next frame">
+        <div class="card-label">Ensuite</div>
+        <div class="note-mid" id="next-name">—</div>
+        <div class="note-oct" id="next-oct"></div>
+        <div class="fing small" id="next-fing"></div>
+        <div class="then" id="then-names"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="track frame" id="track"><div class="track-inner" id="track-inner"></div></div>
+
+  <div class="listen-bar frame" id="listen-bar">
+    <div class="heard"><span class="heard-label">J'entends</span><b id="heard-note">…</b></div>
+    <div class="meter" aria-hidden="true"><div class="meter-mid"></div><div class="needle" id="needle"></div></div>
+    <div class="msg" id="msg">Appuie sur « Commencer »</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn big" id="btn-start">▶ Commencer</button>
+    <button class="btn" id="btn-restart">↺ Recommencer</button>
+    <button class="btn" id="btn-hint" title="Entendre la note à jouer">🔈 Entendre la note</button>
+    <label class="tempo" id="tempo-wrap">Vitesse <input type="range" id="tempo" min="40" max="130" value="100"><span id="tempo-val">100 %</span></label>
+  </div>
+  <div class="legend">● bouché · ○ ouvert · <span class="dim">pouces en pointillés (dessous)</span> · <span class="dim">mélodies d'après <a href="https://www.ocwalk.com" target="_blank" rel="noopener">OcWalk</a></span></div>
+</section>
+
+<!-- ============================== ÉDITEUR ============================== -->
+<section id="editor" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="ed-back" aria-label="Retour">◀</button>
+    <div class="song-title"><b>Mes mélodies</b><small>Tape les notes, ou joue-les à l'ocarina</small></div>
+    <span></span>
+  </div>
+  <div class="panel">
+    <div class="ed-grid">
+      <label>Titre <input id="ed-title" maxlength="60" placeholder="Ex. : Thème du printemps"></label>
+      <label>Rangée
+        <select id="ed-cat">
+          <option value="perso">Mes mélodies</option>
+          <option value="stardew">Vallée</option>
+          <option value="zelda">Zelda</option>
+          <option value="lotr">Terre du Milieu</option>
+          <option value="debut">Pour débuter</option>
+        </select>
+      </label>
+      <label>Tempo <input id="ed-tempo" type="number" min="30" max="220" value="90"></label>
+    </div>
+    <label class="full">Notes
+      <textarea id="ed-notes" rows="5" spellcheck="false" placeholder="C5:2 D5 E5 | F5:.5 G5:.5 A5:3"></textarea>
+    </label>
+    <div class="ed-help">Format : <code>NOTE:durée</code>, ex. <code>A5:2</code> = La pendant 2 temps, <code>F5:.5</code> = croche. <code>|</code> sépare les phrases, <code>R</code> = silence. De C5 (Do grave, tout bouché) à F6 (Fa aigu, tout ouvert). Dièses : C#5, F#5… bémols : Eb5, Bb5…</div>
+    <div class="keys" id="ed-keys"></div>
+    <div class="ed-dur">Durée du prochain clic :
+      <button class="chip" data-d=".5">croche</button><button class="chip on" data-d="1">noire</button><button class="chip" data-d="2">blanche</button><button class="chip" data-d="3">3 temps</button><button class="chip" data-d="4">ronde</button>
+      <button class="chip" id="ed-bar">| phrase</button><button class="chip" id="ed-undo">⌫ effacer</button>
+    </div>
+    <div class="controls">
+      <button class="btn" id="ed-rec">⏺ Enregistrer en jouant</button>
+      <button class="btn" id="ed-test">▶ Écouter</button>
+      <button class="btn big" id="ed-save">💾 Sauvegarder</button>
+      <button class="btn danger" id="ed-delete" hidden>🗑 Supprimer</button>
+    </div>
+    <div class="msg" id="ed-msg"></div>
+  </div>
+</section>
+
+<!-- ============================== RÉGLAGES ============================== -->
+<dialog id="settings" class="frame">
+  <form method="dialog">
+    <h2>Réglages</h2>
+    <label>Noms des notes
+      <select id="set-notation"><option value="fr">Do Ré Mi</option><option value="en">C D E</option></select>
+    </label>
+    <label>Mon ocarina
+      <select id="set-oct">
+        <option value="auto">Détecter tout seul</option>
+        <option value="0">Do grave = Do5 (523 Hz)</option>
+        <option value="12">Do grave = Do6 (1047 Hz)</option>
+      </select>
+    </label>
+    <label class="row"><input type="checkbox" id="set-ignore-oct"> Accepter la bonne note même à l'octave (plus facile)</label>
+    <label>Sensibilité du micro <input type="range" id="set-sens" min="0" max="1" step="0.05"></label>
+    <p class="dim small" id="set-detected"></p>
+    <menu><button class="btn big" value="ok">OK</button></menu>
+  </form>
+</dialog>
+
+<dialog id="result" class="frame">
+  <h2 id="res-title">Bravo !</h2>
+  <div class="stars" id="res-stars">★★★</div>
+  <p id="res-text"></p>
+  <menu><button class="btn" id="res-again">↺ Rejouer</button><button class="btn big" id="res-ok">Continuer</button></menu>
+</dialog>
+
+<script src="js/songs.js"></script>
+<script src="js/songs-ocwalk.js"></script>
+<script src="js/music.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
