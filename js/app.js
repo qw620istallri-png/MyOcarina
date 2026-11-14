@@ -155,6 +155,7 @@
       game.notes = M.parseSong(song.notes).filter((n) => n.midi == null || true);
     } catch (e) { alert(e.message); return; }
     game.song = song;
+    if (window.themeFor) scene.setTheme(window.themeFor(song));
     $("#play-title").textContent = song.titre;
     $("#play-sub").textContent = song.sous || "";
     show("play");
@@ -163,6 +164,7 @@
   }
 
   function openTuner() {
+    scene.setTheme("vallee");
     game.song = { titre: "Accordeur & doigtés", sous: "Joue une note, je te montre laquelle", notes: "" };
     game.notes = [];
     $("#play-title").textContent = game.song.titre;
@@ -509,6 +511,8 @@
     $("#ed-title").value = song ? song.titre : "";
     $("#ed-cat").value = song ? song.cat : settings.cat === "debut" ? "perso" : settings.cat;
     $("#ed-tempo").value = song ? song.tempo : 90;
+    $("#ed-theme").innerHTML = Object.entries(window.THEMES).map(([id, t]) => `<option value="${id}">${t.nom}</option>`).join("");
+    $("#ed-theme").value = song ? window.themeFor(song) : "vallee";
     $("#ed-notes").value = song ? song.notes : "";
     $("#ed-delete").hidden = !song;
     $("#ed-msg").textContent = "";
@@ -602,7 +606,7 @@
     const song = {
       id: editing ? editing.id : "u" + Date.now().toString(36), user: true,
       cat: $("#ed-cat").value, titre, sous: "Ma mélodie",
-      tempo: parseInt($("#ed-tempo").value, 10) || 90, diff: 1, notes,
+      tempo: parseInt($("#ed-tempo").value, 10) || 90, diff: 1, notes, theme: $("#ed-theme").value,
     };
     userSongs = userSongs.filter((s) => s.id !== song.id).concat(song);
     store.set("userSongs", userSongs);

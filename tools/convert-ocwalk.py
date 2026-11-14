@@ -1,5 +1,6 @@
+import unicodedata
 import json
-d={x['id']+'|'+x['song']:x for x in json.load(open('songs.json'))}
+d={x['id']+'|'+x['song']:x for x in json.load(open(__import__('sys').argv[1] if len(__import__('sys').argv)>1 else 'songs.json'))}
 def get(song):
     for k,v in d.items():
         if k.split('|')[1]==song: return v
@@ -69,7 +70,7 @@ for song,cat,titre,sous,tempo,diff in SEL:
         last=ph
         toks.append(tok(m)+('' if dur==1 else ':%g'%dur))
     print(f"{titre:30} shift {s:+} acc {acc} folded {folded} notes {len(n)}")
-    out.append(dict(id='ow-'+titre.lower().encode('ascii','ignore').decode().replace(' ','-').replace("'",''),cat=cat,titre=titre,sous=sous,tempo=tempo,diff=min(3,diff+(1 if acc>12 else 0)),notes=' '.join(toks),src='ocwalk'))
+    out.append(dict(id='ow-'+unicodedata.normalize('NFKD',titre.lower()).encode('ascii','ignore').decode().replace(' ','-').replace("'",''),cat=cat,titre=titre,sous=sous,tempo=tempo,diff=min(3,diff+(1 if acc>12 else 0)),notes=' '.join(toks),src='ocwalk'))
 ids=[o['id'] for o in out]; assert len(ids)==len(set(ids)),ids
 js="// Mélodies transcrites d'après les tablatures d'OcWalk (https://www.ocwalk.com),\n// converties automatiquement pour l'ocarina 11 trous (Do5 → Fa6).\n// Généré par tools/convert-ocwalk.py — le rythme est approximatif.\nwindow.SONGS_OCWALK = "+json.dumps(out,ensure_ascii=False,indent=1)+";\n"
 open('/home/user/ocarina/js/songs-ocwalk.js','w').write(js)

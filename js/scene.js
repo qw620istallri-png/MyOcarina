@@ -83,6 +83,7 @@
       this.state = "idle"; this.stateT = 0;
       this.particles = [];
       this.t = 0;
+      this.theme = "vallee"; this.weather = []; this.pulse = 0; this.fade = 0;
       this.flies = Array.from({ length: 7 }, () => ({ x: Math.random() * 200, y: 40 + Math.random() * 50, p: Math.random() * 6 }));
       this.clouds = [{ x: 20, y: 14, w: 26 }, { x: 120, y: 8, w: 34 }, { x: 175, y: 22, w: 20 }];
       this.resize();
@@ -97,9 +98,17 @@
       this.c.width = this.W * scale; this.c.height = this.H * scale;
       this.ctx.imageSmoothingEnabled = false;
     }
+    setTheme(id) {
+      if (id === this.theme) return;
+      this.theme = id; this.weather = []; this.fade = 1; this.flash = 0;
+    }
+    get outfit() { const th = window.THEMES && window.THEMES[this.theme]; return Object.assign({}, PAL, (th && th.outfit) || {}); }
     set(state) { if (this.state !== state) { this.state = state; this.stateT = 0; } }
     emit(midi) {
       const col = NOTE_COLORS[((midi % 12) + 12) % 12];
+      this.pulse = 1;
+      const th = window.THEMES && window.THEMES[this.theme];
+      if (th && th.onNote) th.onNote(this, 0, midi);
       this.particles.push({ x: 112, y: 56, vx: 0.15 + Math.random() * 0.25, vy: -0.35 - Math.random() * 0.2, life: 1, col, ph: Math.random() * 6 });
     }
     sparkle(n = 14) {
@@ -114,59 +123,12 @@
       const dt = this.last ? Math.min(50, ts - this.last) : 16;
       this.last = ts; this.t += dt / 1000; this.stateT += dt / 1000;
       const ctx = this.ctx, s = this.scale, W = this.W, H = this.H;
-      // ciel en bandes (dégradé « pixel »)
-      const sky = ["#7ec8e3", "#9bd4e6", "#b7dfe6", "#d4e8df", "#f3e9c9", "#f8dcae"];
-      sky.forEach((c, i) => this.px(0, i * 10, W, 10, c));
-      // soleil
-      this.px(158, 16, 14, 14, "#ffe9a3"); this.px(160, 14, 10, 18, "#ffe9a3"); this.px(156, 18, 18, 10, "#ffe9a3");
-      this.px(161, 19, 8, 8, "#fff6d1");
-      // nuages
-      this.clouds.forEach((cl) => {
-        cl.x += dt * 0.002; if (cl.x > W + 10) cl.x = -cl.w - 10;
-        this.px(cl.x, cl.y + 3, cl.w, 5, "#ffffff"); this.px(cl.x + 4, cl.y, cl.w - 10, 4, "#ffffff");
-        this.px(cl.x + 2, cl.y + 8, cl.w - 4, 1, "#e3eef2");
-      });
-      // collines
-      for (let x = 0; x < W; x++) {
-        const h1 = 58 + Math.round(Math.sin(x / 23) * 5 + Math.sin(x / 9) * 2);
-        this.px(x, h1, 1, H - h1, "#8cc56c");
-        const h2 = 70 + Math.round(Math.sin(x / 31 + 2) * 4);
-        this.px(x, h2, 1, H - h2, "#6bb055");
-      }
-      // arbres au loin
-      [[18, 52], [40, 56], [176, 54], [150, 60]].forEach(([x, y]) => {
-        this.px(x + 3, y + 10, 3, 6, "#7a4b28");
-        this.px(x, y + 2, 9, 9, "#3f8a3a"); this.px(x + 2, y, 5, 13, "#3f8a3a"); this.px(x + 2, y + 2, 3, 3, "#5aa64a");
-      });
-      // petite maison
-      const hx = 140, hy = 66;
-      this.px(hx, hy + 8, 26, 14, "#c98c55"); this.px(hx, hy + 8, 26, 1, "#a8703f");
-      for (let i = 0; i < 9; i++) this.px(hx - 3 + i * 2, hy + 8 - i, 32 - i * 4, 1, "#b8453a");
-      this.px(hx + 4, hy + 13, 6, 9, "#7a4b28"); this.px(hx + 15, hy + 12, 6, 5, "#ffe9a3");
-      this.px(hx + 17, hy + 12, 1, 5, "#7a4b28"); this.px(hx + 15, hy + 14, 6, 1, "#7a4b28");
-      this.px(hx + 20, hy - 2, 3, 6, "#8a5a3a");
-      // fumée
-      for (let i = 0; i < 3; i++) {
-        const k = (this.t * 0.4 + i / 3) % 1;
-        this.px(hx + 21 + Math.sin(k * 6 + i) * 2, hy - 4 - k * 18, 2, 2, `rgba(255,255,255,${0.7 * (1 - k)})`);
-      }
-      // sol
-      this.px(0, 88, W, H - 88, "#5aa64a");
-      for (let x = 0; x < W; x += 3) this.px(x + ((x * 7) % 2), 88 + ((x * 13) % 5), 1, 2, "#4a9440");
-      // chemin
-      for (let y = 88; y < H; y++) { const w = 20 + (y - 88) * 1.6; this.px(96 - w / 2 + 6, y, w, 1, "#d9b77e"); }
-      // clôture
-      for (let x = 2; x < 70; x += 10) { this.px(x, 78, 3, 12, "#9b6a3f"); this.px(x, 78, 3, 1, "#c08a55"); }
-      this.px(0, 81, 72, 2, "#b07a48"); this.px(0, 86, 72, 2, "#b07a48");
-      // fleurs
-      [[20, 96, "#ff9ccf"], [36, 102, "#ffd166"], [60, 94, "#ffffff"], [150, 98, "#ff8a80"], [170, 104, "#a99bff"], [185, 94, "#ffd166"], [8, 106, "#ffffff"]].forEach(([x, y, c]) => {
-        this.px(x, y + 2, 1, 3, "#3f8a3a"); this.px(x - 1, y + 1, 3, 1, c); this.px(x, y, 1, 3, c); this.px(x, y + 1, 1, 1, "#ffe9a3");
-      });
-      // lucioles
-      this.flies.forEach((f) => {
-        f.p += dt * 0.002; const a = (Math.sin(f.p * 2) + 1) / 2;
-        this.px(f.x + Math.sin(f.p) * 6, f.y + Math.cos(f.p * 1.3) * 3, 1, 1, `rgba(255,240,150,${0.3 + a * 0.6})`);
-      });
+      // ---- décor du thème de la chanson
+      const th = (window.THEMES && window.THEMES[this.theme]) || null;
+      this.pulse = Math.max(0, (this.pulse || 0) - dt / 400);
+      if (th) { th.draw(this, dt); window.drawWeather(this, dt, th.weather); }
+      // fondu lors d'un changement de décor
+      if (this.fade > 0) { this.fade = Math.max(0, this.fade - dt / 500); this.px(0, 0, W, H, `rgba(255,248,230,${this.fade})`); }
 
       // ---- héros
       let bob = 0, shake = 0;
@@ -191,11 +153,12 @@
       else if (this.state === "oops") eyes("oops");
       else if (blink) eyes("closed");
       const hs = s * 2; // le héros est dessiné en « gros pixels »
-      drawRows(ctx, body, hx0 * s, hy0 * s, hs);
+      const pal = this.outfit;
+      drawRows(ctx, body, hx0 * s, hy0 * s, hs, pal);
       if (this.state !== "happy") {
-        drawRows(ctx, OCA, hx0 * s, (hy0 + OCA_Y * 2) * s, hs);
+        drawRows(ctx, OCA, hx0 * s, (hy0 + OCA_Y * 2) * s, hs, pal);
       } else {
-        drawRows(ctx, ["ks................ks", "gk................kg", "gk................kg"], (hx0 + 1) * s, (hy0 + 15 * 2) * s, hs);
+        drawRows(ctx, ["ks................ks", "gk................kg", "gk................kg"], (hx0 + 1) * s, (hy0 + 15 * 2) * s, hs, pal);
         drawRows(ctx, ["kkkkkk", "kWoooOk", "kOOOOk", ".kkkk"], (hx0 + 38) * s, (hy0 + 14) * s, hs);
       }
       if (this.state === "oops") {

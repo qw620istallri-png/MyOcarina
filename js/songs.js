@@ -9,6 +9,7 @@
 //    - durée : en temps (1 = noire, .5 = croche, 2 = blanche...). Défaut 1.
 //    - R:1   : un silence d'un temps.
 //    - |     : simple séparateur de phrase (sert à l'affichage et à la respiration).
+//  Option : theme: "foret" | "orage" | "nuit" | "comte"… (voir js/themes.js) pour choisir le décor.
 //  Si l'ocarina sonne une octave plus haut, l'appli s'adapte toute seule.
 //  Les grands morceaux viennent de js/songs-ocwalk.js (tablatures OcWalk).
 // =====================================================================

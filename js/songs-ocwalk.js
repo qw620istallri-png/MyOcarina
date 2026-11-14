@@ -23,7 +23,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-chant-des-temptes",
+  "id": "ow-chant-des-tempetes",
   "cat": "zelda",
   "titre": "Chant des Tempêtes",
   "sous": "Version complète",
@@ -53,7 +53,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-fort-kokiri",
+  "id": "ow-foret-kokiri",
   "cat": "zelda",
   "titre": "Forêt Kokiri",
   "sous": "Le village de départ",
@@ -63,7 +63,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-fontaine-des-grandes-fes",
+  "id": "ow-fontaine-des-grandes-fees",
   "cat": "zelda",
   "titre": "Fontaine des Grandes Fées",
   "sous": "",
@@ -93,7 +93,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-le-march-dhyrule",
+  "id": "ow-le-marche-dhyrule",
   "cat": "zelda",
   "titre": "Le marché d'Hyrule",
   "sous": "",
@@ -103,7 +103,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-valle-gerudo",
+  "id": "ow-vallee-gerudo",
   "cat": "zelda",
   "titre": "Vallée Gerudo",
   "sous": "",
@@ -123,7 +123,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-cran-titre",
+  "id": "ow-ecran-titre",
   "cat": "zelda",
   "titre": "Écran titre",
   "sous": "Ocarina of Time",
@@ -143,7 +143,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-srnade-de-leau",
+  "id": "ow-serenade-de-leau",
   "cat": "zelda",
   "titre": "Sérénade de l'Eau",
   "sous": "Chant de téléportation",
@@ -173,7 +173,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-ballade-de-la-desse",
+  "id": "ow-ballade-de-la-deesse",
   "cat": "zelda2",
   "titre": "Ballade de la Déesse",
   "sous": "Skyward Sword",
@@ -183,7 +183,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-thme-principal",
+  "id": "ow-theme-principal",
   "cat": "zelda2",
   "titre": "Thème principal",
   "sous": "The Legend of Zelda",
@@ -193,7 +193,7 @@ window.SONGS_OCWALK = [
   "src": "ocwalk"
  },
  {
-  "id": "ow-thme-de-mipha",
+  "id": "ow-theme-de-mipha",
   "cat": "zelda2",
   "titre": "Thème de Mipha",
   "sous": "Breath of the Wild",
