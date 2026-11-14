@@ -1,5 +1,5 @@
 // Cache hors-ligne : l'appli fonctionne sans réseau une fois ouverte une fois.
-const CACHE = "ocarina-v4";
+const CACHE = "ocarina-v5";
 const FILES = ["./", "index.html", "css/style.css", "js/songs.js", "js/songs-ocwalk.js", "js/music.js", "js/themes.js", "js/scene.js", "js/app.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });

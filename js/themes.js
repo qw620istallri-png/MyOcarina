@@ -7,7 +7,18 @@
 (function () {
   // ---------------------------------------------------- briques de décor
   const B = {
-    sky(S, cols) { cols.forEach((c, i) => S.px(0, i * 10, S.W, 10, c)); S.px(0, cols.length * 10, S.W, 40, cols[cols.length - 1]); },
+    sky(S, cols) {
+      cols.forEach((c, i) => S.px(0, i * 10, S.W, 10, c));
+      S.px(0, cols.length * 10, S.W, 40, cols[cols.length - 1]);
+      // tramage entre les bandes pour un dégradé « pixel art » plus doux
+      for (let i = 1; i < cols.length; i++) {
+        const y = i * 10;
+        for (let x = 0; x < S.W; x += 2) {
+          S.px(x, y - 2, 1, 1, cols[i]); S.px(x + 1, y - 1, 1, 1, cols[i]);
+          S.px(x + 1, y, 1, 1, cols[i - 1]); S.px(x, y + 1, 1, 1, cols[i - 1]);
+        }
+      }
+    },
     sun(S, x, y, c1 = "#ffe9a3", c2 = "#fff6d1", pulse = 0) {
       const r = Math.round(pulse * 2);
       S.px(x - r, y + 2 - r, 14 + 2 * r, 10 + 2 * r, c1); S.px(x + 2 - r, y - r, 10 + 2 * r, 14 + 2 * r, c1); S.px(x + 3, y + 3, 8, 8, c2);
@@ -54,7 +65,9 @@
       if (snow) { S.px(x + 3, y, 3, 1, snow); S.px(x + 1, y + 6, 2, 1, snow); S.px(x + 6, y + 9, 2, 1, snow); }
     },
     ground(S, c1, c2, y = 88) {
+      S.groundCol = c2;
       S.px(0, y, S.W, S.H - y, c1);
+      for (let i = 0; i < 40; i++) S.px((i * 53) % 200, y + 4 + ((i * 29) % (S.H - y - 4)), 2, 1, c2);
       for (let x = 0; x < S.W; x += 3) S.px(x + ((x * 7) % 2), y + ((x * 13) % 5), 1, 2, c2);
     },
     path(S, col, y = 88) { for (let yy = y; yy < S.H; yy++) { const w = 20 + (yy - y) * 1.6; S.px(96 - w / 2 + 6, yy, w, 1, col); } },
@@ -178,6 +191,7 @@
     // la ferme cozy (par défaut, Stardew, débutants)
     vallee: {
       nom: "La ferme",
+      costume: "paille",
       draw(S, dt) {
         B.sky(S, ["#7ec8e3", "#9bd4e6", "#b7dfe6", "#d4e8df", "#f3e9c9", "#f8dcae"]);
         B.sun(S, 158, 14, undefined, undefined, S.pulse);
@@ -190,6 +204,7 @@
         B.flowers(S, FLOWERS.slice(0, 4)); B.flies(S, dt, undefined, S.pulse * .5);
       },
       weather: "petals",
+      outfit: { g: "#5f9e48", G: "#3f6e30", y: "#d24b3e" },
     },
     // forêt kokiri / bois perdus
     foret: {
@@ -212,6 +227,7 @@
     // tempêtes et moulin
     orage: {
       nom: "L'orage",
+      costume: "capuche",
       draw(S, dt) {
         const flash = S.flash > 0 ? S.flash : 0;
         S.flash = Math.max(0, (S.flash || 0) - dt / 300);
@@ -226,11 +242,12 @@
       },
       weather: "rain",
       onNote(S, i, midi) { if (midi >= 86 && Math.random() < 0.5) S.flash = 1; },
-      outfit: { g: "#4a7a8a", G: "#2f5560", l: "#7aa8b4", y: "#c9b25a" },
+      outfit: { c: "#f2c94c", C: "#c9a032", g: "#e8b83a", G: "#b88a22", l: "#f6dc80" },
     },
     // nuit au château (berceuse, nocturne)
     nuit: {
       nom: "La nuit au château",
+      costume: "nuit",
       draw(S, dt) {
         S.skyTop = "#1d2850";
         B.sky(S, ["#1d2850", "#24305c", "#2c3a68", "#364575", "#415182", "#4d5d8e"]);
@@ -246,6 +263,7 @@
     // ranch au coucher du soleil
     ranch: {
       nom: "Le ranch",
+      costume: "paille",
       draw(S, dt) {
         B.sky(S, ["#f6b47a", "#f7c088", "#f8cc98", "#f6d6a6", "#f2ddb2", "#eddfbc"]);
         B.sun(S, 140, 44, "#ffcf70", "#fff0b0", S.pulse);
@@ -258,7 +276,7 @@
         S.px(hx - 5, hy + 1 + n, 6, 4, "#8a4a2a"); S.px(hx - 8, hy + 4 + n, 4, 7, "#8a4a2a"); S.px(hx + 17, hy + 1, 3, 6, "#efe2c4"); S.px(hx - 3, hy - 1 + n, 4, 2, "#efe2c4");
       },
       weather: null,
-      outfit: { g: "#4f9e40" },
+      outfit: { g: "#c0643a", G: "#8a4426", r: "#4f9e40", R: "#2f6b2a", n: "#5b7fb8", N: "#3f5f90" },
     },
     // temple du temps (chant du temps, prélude, écran titre)
     temple: {
@@ -277,6 +295,7 @@
     // désert gerudo
     desert: {
       nom: "Le désert",
+      costume: "turban",
       draw(S, dt) {
         B.sky(S, ["#f2b37a", "#f4c08a", "#f6cc9a", "#f6d6aa", "#f4dcb6", "#f0dcbc"]);
         B.sun(S, 30, 16, "#fff0a0", "#fffbe0", S.pulse);
@@ -310,6 +329,7 @@
     // la grande mer
     mer: {
       nom: "La grande mer",
+      costume: "bandana",
       draw(S, dt) {
         B.sky(S, ["#6ec0ec", "#86cbee", "#9ed6f0", "#b4e0f0", "#c8e8ee", "#d8eeec"]);
         B.sun(S, 160, 12, undefined, undefined, S.pulse); B.clouds(S, dt);
@@ -323,11 +343,12 @@
         S.px(0, 88, 200, 24, "#e6d29a"); S.px(0, 88, 200, 2, "#f2e2b0");
       },
       weather: null,
-      outfit: { g: "#4f9e40" },
+      outfit: { g: "#f2f2f2", G: "#c8c8d0", n: "#4a6ab0", N: "#34508a", r: "#3a6fc4", R: "#244a8a" },
     },
     // volcan (boléro)
     feu: {
       nom: "Le volcan",
+      costume: "casque",
       draw(S, dt) {
         B.sky(S, ["#3a1a1a", "#4a2020", "#5c2822", "#703224", "#863c26", "#9a4628"]);
         B.volcano(S, 140, 30, `rgba(255,${120 + Math.round(S.pulse * 100)},40,1)`);
@@ -357,21 +378,23 @@
     // la Comté
     comte: {
       nom: "La Comté",
+      costume: "hobbit",
       draw(S, dt) {
         B.sky(S, ["#8fcaea", "#a6d4ec", "#bcdeec", "#cfe6e6", "#e0ecdc", "#ecefd0"]);
         B.sun(S, 166, 12, undefined, undefined, S.pulse); B.clouds(S, dt);
         B.hills(S, 60, 6, 30, 1, "#8cc56c");
         B.hobbitHole(S, 132, 60);
-        B.tree(S, 20, 54, "#4a9a3a", "#6aba4a", "#7a4b28", 0.5); B.bigTree(S, 70, 26, "#3f8a3a", "#5aa64a", "#6a4a2a");
+        B.tree(S, 20, 54, "#4a9a3a", "#6aba4a", "#7a4b28", 0.5); B.bigTree(S, 34, 30, "#3f8a3a", "#5aa64a", "#6a4a2a");
         B.ground(S, "#6bb055", "#5aa64a"); B.path(S, "#d9b77e");
         B.flowers(S, FLOWERS); B.flies(S, dt, undefined, S.pulse * .4);
       },
       weather: "petals",
-      outfit: { g: "#6a7a3a", G: "#4a5428", l: "#8a9a5a", y: "#c98c55", r: "#d2a03e", R: "#a87a28" },
+      outfit: { g: "#8a5a2c", G: "#5e3c1c", r: "#f0e0b0", R: "#cbb48a", n: "#6a7a3a", N: "#4a5428", B: "#f0c098", h: "#7a4a22", H: "#5a3418" },
     },
     // montagnes brumeuses (nuit, neige)
     montagnes: {
       nom: "Les montagnes",
+      costume: "nain",
       draw(S, dt) {
         S.skyTop = "#20284a";
         B.sky(S, ["#20284a", "#283256", "#323d62", "#3d486e", "#48547a", "#546086"]);
@@ -385,11 +408,12 @@
         S.px(150, 94, 12, 2, "#5a3a22"); S.px(153, 88 - f * 3, 6, 6 + f * 3, "#ff9a3a"); S.px(155, 90 - f * 2, 2, 4 + f * 2, "#ffe07a");
       },
       weather: "snow",
-      outfit: { g: "#6a6e78", G: "#4a4e58", l: "#8a8e98", y: "#b8a27a" },
+      outfit: { c: "#4a5a7a", C: "#2e3a52", g: "#7a4a2a", G: "#5a3418", H: "#c0703a", h: "#e0904a" },
     },
     // étoile du soir (elfique, crépuscule)
     elfique: {
       nom: "Fondcombe",
+      costume: "elfe",
       draw(S, dt) {
         S.skyTop = "#2c2a5a";
         B.sky(S, ["#2c2a5a", "#3c3670", "#564488", "#7a5296", "#a0649c", "#c07a9a"]);
@@ -403,11 +427,12 @@
         B.flies(S, dt, "200,220,255", S.pulse);
       },
       weather: "sparkles",
-      outfit: { g: "#5a6a8a", G: "#3e4a66", l: "#8a9aba", y: "#d8d0b0" },
+      outfit: { h: "#f0d888", H: "#c8a858", g: "#dfe6f4", G: "#aab4cc", r: "#8a9ac8", R: "#5a6a98", y: "#c0c8d8", n: "#c8d0e4", N: "#9aa4bc" },
     },
     // vers l'ouest : port au couchant
     ouest: {
       nom: "Les Havres Gris",
+      costume: "capuche",
       draw(S, dt) {
         B.sky(S, ["#f0a070", "#f2b080", "#f4c090", "#f2cca0", "#eed4b0", "#e8d8c0"]);
         B.sun(S, 92, 50, "#ffd080", "#fff0c0", S.pulse);
@@ -419,11 +444,12 @@
         S.px(0, 88, 200, 24, "#b8b4a8"); S.px(0, 88, 200, 2, "#d0ccc0");
       },
       weather: null,
-      outfit: { g: "#6a6e78", G: "#4a4e58", l: "#8a8e98", y: "#d8d0b0" },
+      outfit: { c: "#9a9ea8", C: "#6e727c", g: "#dfe2e8", G: "#aab0bc" },
     },
     // soleil éclatant
     soleil: {
       nom: "Plein soleil",
+      costume: "paille",
       draw(S, dt) {
         B.sky(S, ["#ffd36a", "#ffdc80", "#ffe498", "#ffeab0", "#fff0c4", "#fff4d4"]);
         const r = 1 + S.pulse * 3;
@@ -461,7 +487,27 @@
     return BY_ID[song.id] || BY_CAT[song.cat] || "vallee";
   }
 
+  // premier plan (touffes d'herbe, buissons) + vignette, dessinés devant le héros
+  function foreground(S) {
+    const g = S.groundCol;
+    if (g) {
+      for (let x = -2; x < S.W; x += 5) {
+        const h = 3 + ((x * 7) % 4), o = Math.round(Math.sin(S.t * 2 + x / 8) * 1);
+        S.px(x + o, S.H - h, 1, h, g); S.px(x + 2, S.H - h + 1, 1, h - 1, g);
+      }
+      [[-8, 96], [186, 98]].forEach(([bx, by]) => {
+        S.px(bx, by + 4, 24, 14, g); S.px(bx + 3, by, 16, 6, g); S.px(bx + 6, by + 2, 4, 2, "rgba(255,255,255,.12)");
+      });
+    }
+    for (let i = 0; i < 6; i++) {
+      const a = 0.05 * (6 - i) / 6 + 0.01;
+      S.px(0, i, S.W, 1, `rgba(0,0,0,${a})`); S.px(0, S.H - 1 - i, S.W, 1, `rgba(0,0,0,${a})`);
+      S.px(i, 0, 1, S.H, `rgba(0,0,0,${a})`); S.px(S.W - 1 - i, 0, 1, S.H, `rgba(0,0,0,${a})`);
+    }
+  }
+
   window.THEMES = THEMES;
+  window.drawForeground = foreground;
   window.themeFor = themeFor;
   window.drawWeather = weather;
 })();

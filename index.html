@@ -52,12 +52,15 @@
     <button class="mode" data-mode="follow">🎶 Jouer avec moi</button>
     <button class="mode" data-mode="free">🎯 Libre</button>
   </div>
+  <div class="progress" id="progress" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div><span class="progress-txt" id="progress-txt"></span></div>
 
   <div class="stage">
     <div class="scene-wrap frame">
       <canvas id="scene"></canvas>
       <div class="bubble" id="bubble" hidden></div>
       <div class="score-badge" id="score-badge" hidden></div>
+      <div class="combo" id="combo" hidden></div>
+      <div class="decor-name" id="decor-name"></div>
     </div>
 
     <div class="notes-row">
@@ -65,12 +68,14 @@
         <div class="card-label" id="now-label">Maintenant</div>
         <div class="note-big" id="now-name">—</div>
         <div class="note-oct" id="now-oct"></div>
+        <div class="rep" id="now-rep"></div>
         <div class="fing" id="now-fing"></div>
       </div>
       <div class="card next frame">
         <div class="card-label">Ensuite</div>
         <div class="note-mid" id="next-name">—</div>
         <div class="note-oct" id="next-oct"></div>
+        <div class="same-tag" id="next-same" hidden>↻ même note : détache-la</div>
         <div class="fing small" id="next-fing"></div>
         <div class="then" id="then-names"></div>
       </div>
@@ -89,6 +94,7 @@
     <button class="btn big" id="btn-start">▶ Commencer</button>
     <button class="btn" id="btn-restart">↺ Recommencer</button>
     <button class="btn" id="btn-hint" title="Entendre la note à jouer">🔈 Entendre la note</button>
+    <button class="btn" id="btn-sheet">📜 Toute la partition</button>
     <label class="tempo" id="tempo-wrap">Vitesse <input type="range" id="tempo" min="40" max="130" value="100"><span id="tempo-val">100 %</span></label>
   </div>
   <div class="legend">● bouché · ○ ouvert · <span class="dim">pouces en pointillés (dessous)</span> · <span class="dim">mélodies d'après <a href="https://www.ocwalk.com" target="_blank" rel="noopener">OcWalk</a></span></div>
@@ -154,6 +160,15 @@
     <p class="dim small" id="set-detected"></p>
     <menu><button class="btn big" value="ok">OK</button></menu>
   </form>
+</dialog>
+
+<dialog id="sheet" class="frame sheet">
+  <div class="sheet-head">
+    <div><h2 id="sheet-title">Partition</h2><p class="dim small" id="sheet-sub">Touche une note pour reprendre à partir d'elle.</p></div>
+    <div class="sheet-actions"><button class="btn" id="sheet-print">🖨 Imprimer</button><button class="btn big" id="sheet-close">Fermer</button></div>
+  </div>
+  <div class="sheet-legend">Gauche : main gauche · droite : main droite (en haut le trou double) · en bas : les pouces · ● bouché ○ ouvert</div>
+  <div class="sheet-body" id="sheet-body"></div>
 </dialog>
 
 <dialog id="result" class="frame">

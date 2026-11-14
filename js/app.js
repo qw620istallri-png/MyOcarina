@@ -98,6 +98,53 @@
     return s + `</svg>`;
   }
 
+  // ------------------------------------------------------------ partition complète (schéma façon tablature)
+  // Colonnes : main gauche (Lp, Lr, Lm, Li de haut en bas), main droite
+  // (trou double Rp, Rr, Rm, Ri), puis les deux pouces.
+  function chartSVG(midi) {
+    const f = M.fingering(midi) || {};
+    const dot = (x, y, r, on) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${on ? DARK : "#fffaf0"}" stroke="${DARK}" stroke-width="1.6"/>`;
+    let s = `<svg viewBox="0 0 40 74"><rect x="1" y="1" width="38" height="72" rx="6" fill="#fff" stroke="${DARK}" stroke-width="1.5"/>`;
+    ["Lp", "Lr", "Lm", "Li"].forEach((h, i) => (s += dot(12, 10 + i * 12, 4.8, f[h] === 1)));
+    s += dot(25, 10, 2.6, (f.Rp || 0) >= 0.5) + dot(32, 10, 2.6, f.Rp === 1);
+    ["Rr", "Rm", "Ri"].forEach((h, i) => (s += dot(28, 22 + i * 12, 4.8, f[h] === 1)));
+    s += `<line x1="3" y1="56" x2="37" y2="56" stroke="${DARK}" stroke-width="1.2"/>`;
+    s += dot(12, 65, 4.8, f.Lt === 1) + dot(28, 65, 4.8, f.Rt === 1);
+    return s + "</svg>";
+  }
+  function renderSheet() {
+    $("#sheet-title").textContent = game.song.titre;
+    const body = $("#sheet-body");
+    body.innerHTML = "";
+    let line = null, lastPhrase = -1;
+    game.notes.forEach((n, i) => {
+      if (n.phrase !== lastPhrase) { line = document.createElement("div"); line.className = "sheet-line"; body.appendChild(line); lastPhrase = n.phrase; }
+      const c = document.createElement("button");
+      c.type = "button"; c.dataset.i = i;
+      if (n.midi == null) { c.className = "cell rest"; c.innerHTML = "<span>𝄽</span><small>silence</small>"; }
+      else {
+        c.className = "cell";
+        c.innerHTML = `${chartSVG(n.midi)}<span>${nameOf(n.midi)}</span><small>${M.octaveLabel(n.midi) === "aigu" ? "aigu" : n.dur >= 2 ? "long" : n.dur < 1 ? "court" : ""}</small>`;
+        c.onclick = () => {
+          stopDemo(); game.running = false;
+          game.idx = i; game.stableMidi = null; game.needRelease = false;
+          if (game.mode === "free") setMode("follow");
+          $("#btn-start").textContent = game.mode === "listen" ? "▶ Écouter" : "▶ Reprendre";
+          updateCards(); markSheet();
+          $("#sheet").close();
+          say(`On reprend à ${nameOf(n.midi)}. Appuie sur « Reprendre ».`);
+        };
+      }
+      line.appendChild(c);
+    });
+    markSheet();
+  }
+  function markSheet() {
+    $$("#sheet-body .cell").forEach((c) => { const i = +c.dataset.i; c.classList.toggle("cur", i === game.idx); c.classList.toggle("done", i < game.idx); });
+    const cur = $("#sheet-body .cell.cur");
+    if (cur) cur.scrollIntoView({ block: "nearest" });
+  }
+
   // ------------------------------------------------------------ navigation
   function show(id) {
     $$(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
@@ -155,7 +202,12 @@
       game.notes = M.parseSong(song.notes).filter((n) => n.midi == null || true);
     } catch (e) { alert(e.message); return; }
     game.song = song;
-    if (window.themeFor) scene.setTheme(window.themeFor(song));
+    if (window.themeFor) {
+      const th = window.themeFor(song);
+      scene.setTheme(th);
+      const dn = $("#decor-name"); dn.textContent = "📍 " + (window.THEMES[th].nom || "");
+      dn.classList.add("show"); clearTimeout(game.dnT); game.dnT = setTimeout(() => dn.classList.toggle("show", false), 2200);
+    }
     $("#play-title").textContent = song.titre;
     $("#play-sub").textContent = song.sous || "";
     show("play");
@@ -181,6 +233,7 @@
     $$(".mode").forEach((b) => (b.disabled = !game.notes.length && b.dataset.mode !== "free"));
     $("#tempo-wrap").style.display = mode === "listen" ? "" : "none";
     $("#btn-hint").style.display = mode === "follow" ? "" : "none";
+    $("#btn-sheet").style.display = game.notes.length ? "" : "none";
     $("#btn-restart").style.display = mode === "free" ? "none" : "";
     $("#track").style.display = game.notes.length ? "" : "none";
     $("#now-label").textContent = mode === "free" ? "Tu joues" : "Maintenant";
@@ -200,7 +253,8 @@
   }
 
   function resetGame() {
-    game.idx = firstNoteIdx(0); game.errors = 0; game.hits = 0; game.misses = new Set();
+    game.idx = firstNoteIdx(0); game.errors = 0; game.hits = 0; game.misses = new Set(); game.combo = 0; game.lastShown = null;
+    $("#combo").hidden = true;
     game.stableMidi = null; game.reported = false; game.needRelease = false; game.silence = 0;
     $("#score-badge").hidden = true;
     renderTrack();
@@ -215,7 +269,8 @@
     game.notes.forEach((n, i) => {
       if (n.phrase !== lastPhrase) { const g = document.createElement("div"); g.className = "phrase-gap"; el.appendChild(g); lastPhrase = n.phrase; }
       const t = document.createElement("div");
-      t.className = "tile" + (n.midi == null ? " rest" : "");
+      const pv = prevNoteIdx(i);
+      t.className = "tile" + (n.midi == null ? " rest" : "") + (n.midi != null && pv >= 0 && game.notes[pv].midi === n.midi ? " same-prev" : "");
       t.style.minWidth = Math.round(26 + n.dur * 16) + "px";
       t.dataset.i = i;
       if (n.midi != null) {
@@ -228,6 +283,7 @@
   function updateTrack() {
     $$("#track-inner .tile").forEach((t) => {
       const i = +t.dataset.i;
+      if (i < game.idx && !t.classList.contains("done") && game.lastShown != null) { t.classList.add("just"); setTimeout(() => t.classList.toggle("just", false), 520); }
       t.classList.toggle("done", i < game.idx);
       t.classList.toggle("cur", i === game.idx);
       t.classList.toggle("miss", game.misses.has(i));
@@ -245,15 +301,48 @@
     $("#now-oct").textContent = midi == null ? "" : octText(midi);
     $("#now-fing").innerHTML = fingeringSVG(midi);
   }
+  function restart(el, cls) { el.classList.toggle(cls, false); void el.offsetWidth; el.classList.add(cls); }
+  function realIdx() { return game.notes.map((n, i) => (n.midi != null ? i : -1)).filter((i) => i >= 0); }
+  function updateProgress() {
+    const real = realIdx(); const done = real.filter((i) => i < game.idx).length;
+    $("#progress").style.display = game.notes.length && game.mode !== "free" ? "" : "none";
+    $("#progress-bar").style.width = (real.length ? (100 * done) / real.length : 0) + "%";
+    $("#progress-txt").textContent = real.length ? `${Math.min(done + 1, real.length)} / ${real.length}` : "";
+  }
+  function updateRep() {
+    // notes identiques à la suite : une pastille par répétition
+    const el = $("#now-rep");
+    el.innerHTML = "";
+    const cur = noteAt(game.idx);
+    if (!cur || game.mode === "free") return;
+    const ci = firstNoteIdx(game.idx);
+    let a = ci, b = ci;
+    while (prevNoteIdx(a) >= 0 && game.notes[prevNoteIdx(a)].midi === cur.midi && a - prevNoteIdx(a) <= 2) a = prevNoteIdx(a);
+    while (firstNoteIdx(b + 1) < game.notes.length && game.notes[firstNoteIdx(b + 1)].midi === cur.midi && firstNoteIdx(b + 1) - b <= 2) b = firstNoteIdx(b + 1);
+    const run = realIdx().filter((i) => i >= a && i <= b);
+    if (run.length < 2) return;
+    run.forEach((i) => { const d = document.createElement("span"); d.className = "dot" + (i < ci ? " done" : i === ci ? " cur" : ""); el.appendChild(d); });
+    const k = run.indexOf(ci) + 1;
+    const t = document.createElement(k > 1 ? "b" : "span");
+    t.textContent = k > 1 ? `encore ! ${k}/${run.length}` : `× ${run.length}`;
+    el.appendChild(t);
+  }
   function updateCards() {
-    if (game.mode === "free") { updateTrack(); return; }
+    if (game.mode === "free") { updateTrack(); updateProgress(); return; }
     const cur = noteAt(game.idx);
     showNow(cur ? cur.midi : null);
+    if (game.lastShown !== game.idx) {
+      restart($(".card.now"), "pop"); restart($(".card.next"), "slide");
+      game.lastShown = game.idx;
+    }
+    updateRep(); updateProgress();
+    if ($("#sheet").open) markSheet();
     const nextI = firstNoteIdx(game.idx + 1);
     const nx = nextI < game.notes.length ? game.notes[nextI] : null;
     $("#next-name").textContent = nx ? nameOf(nx.midi) : "🏁";
     $("#next-oct").textContent = nx ? octText(nx.midi) : "fin";
     $("#next-fing").innerHTML = nx ? fingeringSVG(nx.midi) : "";
+    $("#next-same").hidden = !(nx && cur && nx.midi === cur.midi);
     const then = [];
     for (let i = nextI + 1; i < game.notes.length && then.length < 4; i++) if (game.notes[i].midi != null) then.push(nameOf(game.notes[i].midi));
     $("#then-names").textContent = then.length ? "puis " + then.join(" · ") : "";
@@ -338,6 +427,8 @@
         game.reported = true;
         game.errors++;
         game.misses.add(game.idx);
+        game.combo = 0; setCombo();
+        floater("✗ " + nameOf(rel), true);
         const dir = rel < target.midi ? "plus aigu ↑" : "plus grave ↓";
         say(`Tu joues ${nameOf(rel)}, il faut ${nameOf(target.midi)} (${dir})`, "bad");
         bubble("Oups !");
@@ -349,9 +440,25 @@
   }
   function prevNoteIdx(i) { i--; while (i >= 0 && game.notes[i].midi == null) i--; return i; }
 
+  function floater(text, bad) {
+    const f = document.createElement("div");
+    f.className = "floater" + (bad ? " bad" : "");
+    f.textContent = text;
+    $(".card.now").appendChild(f);
+    setTimeout(() => f.parentNode && f.parentNode.removeChild(f), 950);
+  }
+  function setCombo() {
+    const c = $("#combo");
+    c.hidden = game.combo < 3;
+    if (game.combo >= 3) { c.textContent = `Série ×${game.combo} ${game.combo >= 10 ? "🔥" : "✨"}`; restart(c, "bump"); }
+    if (game.combo > 0 && game.combo % 10 === 0) scene.sparkle(16);
+  }
   function hit() {
     const n = noteAt(game.idx);
     game.hits++;
+    game.combo = (game.combo || 0) + 1;
+    floater(game.combo >= 5 ? `+1 · ×${game.combo}` : "+1");
+    setCombo();
     scene.emit(n.midi);
     scene.set("play");
     flash("ok");
@@ -565,6 +672,9 @@
   $("#tempo").value = settings.tempo;
   $("#tempo-val").textContent = settings.tempo + " %";
   $("#tempo").oninput = (e) => { settings.tempo = +e.target.value; $("#tempo-val").textContent = settings.tempo + " %"; saveSettings(); };
+  $("#btn-sheet").onclick = () => { if (!game.notes.length) return; renderSheet(); $("#sheet").showModal(); markSheet(); };
+  $("#sheet-close").onclick = () => $("#sheet").close();
+  $("#sheet-print").onclick = () => window.print();
   $("#res-ok").onclick = () => $("#result").close();
   $("#res-again").onclick = () => { $("#result").close(); setMode("follow"); onStart(); };
 

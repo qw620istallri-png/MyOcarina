@@ -7,6 +7,8 @@
     h: "#9a5b2c", H: "#6e3d1c", s: "#f6cba3", S: "#dba27c", e: "#2a1c14",
     w: "#ffffff", p: "#ef8f86", r: "#d24b3e", R: "#9e2f27", b: "#6b4223",
     n: "#efe2c4", N: "#cbb994", B: "#5a3a22", o: "#5b8fe0", O: "#2f5aa8", W: "#cfe6ff",
+    Y: "#e8c66a", D: "#b8923a", t: "#f2ead8", T: "#cfc4a8", j: "#3ab0a0", m: "#a8b0c0", M: "#6a7282",
+    c: "#8a8e98", C: "#5e626c", i: "#e6ecf4",
   };
 
   // Corps du héros (20 x 21). Bonnet vert pointu qui retombe, écharpe rouge.
@@ -50,6 +52,186 @@
     "....ggkkkkkkkkkkkgg...",
   ];
   const OCA_Y = 14;
+
+  // Chapeaux, capuches, cheveux… (remplacent les lignes 0 à 8 du héros)
+  const COSTUMES = {
+ "paille": {
+  "hat": [
+   "......................",
+   "......................",
+   "......................",
+   "........kkkkkk........",
+   ".......kYYYYYYk.......",
+   "......kYYYYYYYYk......",
+   "......krrrrrrrrk......",
+   ".kkkkkkYYYYYYYYkkkkkk.",
+   "kYYYYDYYYYYYYYYYDYYYYk"
+  ]
+ },
+ "turban": {
+  "hat": [
+   "......................",
+   "......................",
+   "......................",
+   "..........kk..........",
+   "........kkjjkk........",
+   "......kkttTTttkk......",
+   ".....kttTtjjtTttk.....",
+   "....kttttTjjTttttk....",
+   "...kTTTTTTTTTTTTTk...."
+  ]
+ },
+ "hobbit": {
+  "hat": [
+   "......................",
+   "......................",
+   "......................",
+   "......................",
+   "......................",
+   ".......kkkkkkkk.......",
+   ".....kkhHhhHhhHk......",
+   "....khHhhHhhHhhHk.....",
+   "...khhHhhHhhHhhHhk...."
+  ]
+ },
+ "casque": {
+  "hat": [
+   "......................",
+   "..........kk..........",
+   ".........krrk.........",
+   ".........krrk.........",
+   "........kkrrkk........",
+   "......kkmmmmmmkk......",
+   ".....kmmWmmmmmmMk.....",
+   "....kmmmmmmmmmmMMk....",
+   "...kMMMMMMMMMMMMMk...."
+  ]
+ },
+ "bandana": {
+  "hat": [
+   "......................",
+   "......................",
+   "......................",
+   "......................",
+   "......................",
+   ".......kkkkkkkk.......",
+   ".....krrrrrrrrrk......",
+   "....krrwrrrrwrrrk.....",
+   "...kRRRRRRRRRRRRRkrk.."
+  ]
+ },
+ "capuche": {
+  "hat": [
+   "......................",
+   "......................",
+   "......................",
+   "........kkkkkk........",
+   "......kkccccccck......",
+   ".....kcccccccccck.....",
+   "....kcccccccccccCk....",
+   "...kcccccccccccccCk...",
+   "..kccCCCCCCCCCCCcck..."
+  ],
+  "sides": [
+   "..kc",
+   "ck..."
+  ],
+  "sideRows": [
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16
+  ]
+ },
+ "elfe": {
+  "hat": [
+   "......................",
+   "......................",
+   "......................",
+   "......................",
+   "......................",
+   "......................",
+   "......kkkkkkkkkk......",
+   "....kkhhhhhhhhhhkk....",
+   "...kiiiiiijiiiiiik...."
+  ],
+  "sides": [
+   ".khh",
+   "hhk.."
+  ],
+  "sideRows": [
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21
+  ]
+ },
+ "nuit": {
+  "over": [
+   [
+    0,
+    [
+     "...................kk.",
+     "..................kwwk",
+     "..................kwwk",
+     "...................kk."
+    ]
+   ]
+  ]
+ },
+ "nain": {
+  "hat": [
+   "......................",
+   "......................",
+   "......................",
+   "........kkkkkk........",
+   "......kkccccccck......",
+   ".....kcccccccccck.....",
+   "....kcccccccccccCk....",
+   "...kcccccccccccccCk...",
+   "..kccCCCCCCCCCCCcck..."
+  ],
+  "sides": [
+   "..kc",
+   "ck..."
+  ],
+  "sideRows": [
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16
+  ],
+  "over": [
+   [
+    17,
+    [
+     "......kHHHHHHHHk......",
+     ".......kHHhHHhHk......",
+     "........kHHHHk........",
+     ".........kHHk........."
+    ]
+   ]
+  ]
+ }
+};
+
 
   function drawRows(ctx, rows, x, y, s, pal) {
     for (let j = 0; j < rows.length; j++) {
@@ -126,7 +308,8 @@
       // ---- décor du thème de la chanson
       const th = (window.THEMES && window.THEMES[this.theme]) || null;
       this.pulse = Math.max(0, (this.pulse || 0) - dt / 400);
-      if (th) { th.draw(this, dt); window.drawWeather(this, dt, th.weather); }
+      this.groundCol = null;
+      if (th) th.draw(this, dt);
       // fondu lors d'un changement de décor
       if (this.fade > 0) { this.fade = Math.max(0, this.fade - dt / 500); this.px(0, 0, W, H, `rgba(255,248,230,${this.fade})`); }
 
@@ -152,9 +335,17 @@
       else if (this.state === "happy") eyes("happy");
       else if (this.state === "oops") eyes("oops");
       else if (blink) eyes("closed");
+      // costume du décor
+      const th0 = window.THEMES && window.THEMES[this.theme];
+      const cos = th0 && th0.costume ? COSTUMES[th0.costume] : null;
+      if (cos) {
+        if (cos.hat) cos.hat.forEach((r, i) => (body[i] = r));
+        if (cos.sides) cos.sideRows.forEach((r) => { if (body[r]) body[r] = cos.sides[0] + body[r].slice(4, 17) + cos.sides[1]; });
+      }
       const hs = s * 2; // le héros est dessiné en « gros pixels »
       const pal = this.outfit;
       drawRows(ctx, body, hx0 * s, hy0 * s, hs, pal);
+      if (cos && cos.over) cos.over.forEach(([y, rows]) => drawRows(ctx, rows, hx0 * s, (hy0 + y * 2) * s, hs, pal));
       if (this.state !== "happy") {
         drawRows(ctx, OCA, hx0 * s, (hy0 + OCA_Y * 2) * s, hs, pal);
       } else {
@@ -166,6 +357,8 @@
         this.px(hx0 + 38, hy0 + 16, 2, 2, "#7fb4ff"); this.px(hx0 + 37, hy0 + 18, 4, 4, "#7fb4ff");
       }
 
+      // météo et premier plan devant le héros
+      if (th) { window.drawWeather(this, dt, th.weather); window.drawForeground(this); }
       // ---- particules (notes de musique + étoiles)
       this.particles = this.particles.filter((p) => p.life > 0);
       this.particles.forEach((p) => {
