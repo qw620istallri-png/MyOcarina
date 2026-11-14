@@ -65,8 +65,8 @@
   // (embouchure en bas à gauche, pointe à droite, vue de dessus).
   const HOLES = [
     // id, x, y, r
-    ["Li", 50, 24, 6], ["Lm", 78, 27, 8.5], ["Lr", 107, 31, 8], ["Lp", 140, 45, 5.5],
-    ["Ri", 112, 62, 8], ["Rm", 143, 64, 7], ["Rr", 171, 70, 7],
+    ["Li", 56, 19, 5.5], ["Lm", 83, 24, 8], ["Lr", 110, 27, 8], ["Lp", 147, 46, 5],
+    ["Ri", 116, 60, 8], ["Rm", 146, 61, 6.5], ["Rr", 171, 66, 6.5],
   ];
   const THUMBS = [["Lt", 22, 118, 8], ["Rt", 104, 118, 8]];
   const DARK = "#3a2414";
@@ -89,7 +89,7 @@
     HOLES.forEach((h) => (s += holeSVG(h, f)));
     // trou double de l'auriculaire droit
     const rp = f ? f.Rp || 0 : 0;
-    s += circle(194, 75, 3.6, rp >= 0.5) + circle(203, 79, 3.6, rp === 1);
+    s += circle(197, 72, 3.4, rp >= 0.5) + circle(195, 80.5, 3.4, rp === 1);
     // pouces (dessous)
     THUMBS.forEach((h) => (s += holeSVG(h, f, true)));
     s += `<text x="22" y="99" text-anchor="middle" font-size="8" fill="#7a5a3a" font-family="sans-serif">pouce G ⤵</text>`;

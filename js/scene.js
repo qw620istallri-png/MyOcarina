@@ -11,39 +11,43 @@
 
   // Corps du héros (20 x 21). Bonnet vert pointu qui retombe, écharpe rouge.
   const BODY = [
-    "......................k.",
-    "....................kkGk",
-    "..................kkgGGk",
-    "........kkkkkkkkkkgggGk.",
-    "......kkgggggggggggggk..",
-    ".....kggglgggggggggggk..",
-    "....kgglggggggggggggGk..",
-    "...kgglgggggggggggggGk..",
-    "...kyyyyyyyyyyyyyyyyk...",
-    "...kHhhhhhhhhhhhhhhHk...",
-    "...khhsssssssssssshhk...",
-    ".ksshssswesssswessshssk.",
-    "..kssssseesssseesssssk..",
-    "...kspps" + "ssssssss" + "sppsk...",
-    "...kssssssskksssssssk...",
-    "....kssssssssssssssk....",
-    ".....kkkkkkkkkkkkkk.....",
-    "......krrrrrrrrrrrk.....",
-    ".....kgrRrgggggggggk....",
-    "....kggrRgggggggggggk...",
-    "....kbbbbbbbybbbbbbbk...",
-    "....kgggggggggggggggk...",
-    "......knnnnkknnnnk......",
-    "......knnNk..knNnk......",
-    ".....kBBBBk..kBBBBk.....",
-    ".....kkkkkk..kkkkkk.....",
+    "..................kk..",
+    "................kkGk..",
+    "..............kkgGk...",
+    ".......kkkkkkkgggk....",
+    ".....kkggglggggGk.....",
+    "....kgggllgggggGk.....",
+    "....kgglgggggggGk.....",
+    "...kgglggggggggGGk....",
+    "...kyyyyyyyyyyyyyk....",
+    "...kHhhhhhhhhhhhHk....",
+    "...khhssssssssshhk....",
+    ".ksshsswessswesshssk..",
+    "..ksssseesssseesssk...",
+    "...kspssssssssspsk....",
+    "...ksssssskksssssk....",
+    "....ksssssssssssk.....",
+    ".......kSSSSSSk.......",
+    ".....krrrrrrrrrrk.....",
+    "....kgrRrggggggggk....",
+    "....kggrRggggggggk....",
+    "...kgggrRgggggggggk...",
+    "...kggggggggggggggk...",
+    "...kbbbbbbybbbbbbbk...",
+    "...kggggggggggggggk...",
+    "...kGGGGGGGGGGGGGGk...",
+    ".....knnnk..knnnk.....",
+    ".....knnNk..kNnnk.....",
+    ".....knnnk..knnnk.....",
+    "....kBBBBk..kBBBBk....",
+    "....kkkkkk..kkkkkk....",
   ];
   // Ocarina transversal tenu à la bouche (calque par-dessus le corps)
   const OCA = [
-    "........kkkkkkkkkkkk....",
-    ".......kWooooooooooOOks.",
-    "......sskOOOOOOOOOOkss..",
-    "........kkkkkkkkkkkk....",
+    "......kkkkkkkkkkk.....",
+    ".....kWoooooooooOOk...",
+    "....sskOOOOOOOOOOkss..",
+    "....ggkkkkkkkkkkkgg...",
   ];
   const OCA_Y = 14;
 
@@ -96,12 +100,12 @@
     set(state) { if (this.state !== state) { this.state = state; this.stateT = 0; } }
     emit(midi) {
       const col = NOTE_COLORS[((midi % 12) + 12) % 12];
-      this.particles.push({ x: 118, y: 60, vx: 0.15 + Math.random() * 0.25, vy: -0.35 - Math.random() * 0.2, life: 1, col, ph: Math.random() * 6 });
+      this.particles.push({ x: 112, y: 56, vx: 0.15 + Math.random() * 0.25, vy: -0.35 - Math.random() * 0.2, life: 1, col, ph: Math.random() * 6 });
     }
     sparkle(n = 14) {
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2;
-        this.particles.push({ x: 96, y: 55, vx: Math.cos(a) * 0.8, vy: Math.sin(a) * 0.8 - 0.4, life: 1, col: NOTE_COLORS[i % 12], star: true });
+        this.particles.push({ x: 96, y: 45, vx: Math.cos(a) * 0.8, vy: Math.sin(a) * 0.8 - 0.4, life: 1, col: NOTE_COLORS[i % 12], star: true });
       }
     }
     px(x, y, w, h, col) { this.ctx.fillStyle = col; this.ctx.fillRect(Math.round(x) * this.scale, Math.round(y) * this.scale, w * this.scale, h * this.scale); }
@@ -170,16 +174,16 @@
       if (this.state === "play") bob = Math.round(Math.sin(this.t * 6) * 0.5 + 0.5);
       if (this.state === "happy") bob = -Math.round(Math.abs(Math.sin(this.stateT * 9)) * 5);
       if (this.state === "oops") shake = Math.round(Math.sin(this.stateT * 40) * 1);
-      const hx0 = 72 + shake, hy0 = 37 + bob;
+      const hx0 = 74 + shake, hy0 = 28 + bob;
       // ombre
-      this.px(80, 87, 34, 3, "rgba(40,60,30,.35)");
+      this.px(82, 87, 30, 3, "rgba(40,60,30,.35)");
       const body = BODY.slice();
       const setc = (row, col, ch) => { body[row] = body[row].slice(0, col) + ch + body[row].slice(col + 1); };
       const eyes = (kind) => {
-        [8, 9, 14, 15].forEach((c) => { setc(11, c, "s"); setc(12, c, "s"); });
-        if (kind === "closed") [8, 9, 14, 15].forEach((c) => setc(12, c, "k"));
-        else if (kind === "happy") { [8, 9, 14, 15].forEach((c) => setc(11, c, "k")); [7, 10, 13, 16].forEach((c) => setc(12, c, "k")); }
-        else if (kind === "oops") { setc(11, 8, "k"); setc(12, 9, "k"); setc(11, 15, "k"); setc(12, 14, "k"); }
+        [7, 8, 12, 13].forEach((c) => { setc(11, c, "s"); setc(12, c, "s"); });
+        if (kind === "closed") [7, 8, 12, 13].forEach((c) => setc(12, c, "k"));
+        else if (kind === "happy") { [7, 8, 12, 13].forEach((c) => setc(11, c, "k")); [6, 9, 11, 14].forEach((c) => setc(12, c, "k")); }
+        else if (kind === "oops") { setc(11, 7, "k"); setc(12, 8, "k"); setc(11, 13, "k"); setc(12, 12, "k"); }
       };
       const blink = (this.t % 4) < 0.12;
       if (this.state === "play") eyes("closed");
@@ -191,12 +195,12 @@
       if (this.state !== "happy") {
         drawRows(ctx, OCA, hx0 * s, (hy0 + OCA_Y * 2) * s, hs);
       } else {
-        drawRows(ctx, [".ks..................sk.", ".ks..................sk."], hx0 * s, (hy0 + 17 * 2) * s, hs);
-        drawRows(ctx, ["kkkkkk", "kWoooOk", "kOOOOk", ".kkkk"], (hx0 + 42) * s, (hy0 + 12) * s, hs);
+        drawRows(ctx, ["ks................ks", "gk................kg", "gk................kg"], (hx0 + 1) * s, (hy0 + 15 * 2) * s, hs);
+        drawRows(ctx, ["kkkkkk", "kWoooOk", "kOOOOk", ".kkkk"], (hx0 + 38) * s, (hy0 + 14) * s, hs);
       }
       if (this.state === "oops") {
         // goutte de sueur
-        this.px(hx0 + 44, hy0 + 18, 2, 2, "#7fb4ff"); this.px(hx0 + 43, hy0 + 20, 4, 4, "#7fb4ff");
+        this.px(hx0 + 38, hy0 + 16, 2, 2, "#7fb4ff"); this.px(hx0 + 37, hy0 + 18, 4, 4, "#7fb4ff");
       }
 
       // ---- particules (notes de musique + étoiles)
@@ -218,9 +222,9 @@
   window.NOTE_COLORS = NOTE_COLORS;
   window.drawHeroIcon = function (canvas, scale) {
     const ctx = canvas.getContext("2d");
-    canvas.width = 26 * scale; canvas.height = 26 * scale;
+    canvas.width = 32 * scale; canvas.height = 32 * scale;
     ctx.imageSmoothingEnabled = false;
-    drawRows(ctx, BODY, 1 * scale, 0, scale);
-    drawRows(ctx, OCA, 1 * scale, OCA_Y * scale, scale);
+    drawRows(ctx, BODY, 5 * scale, 1 * scale, scale);
+    drawRows(ctx, OCA, 5 * scale, (1 + OCA_Y) * scale, scale);
   };
 })();
