@@ -141,6 +141,7 @@
   function show(id) {
     $$(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
     window.scrollTo(0, 0);
+    if (id === "home") updateTodayStrip();
   }
 
   // ------------------------------------------------------------ accueil
@@ -247,7 +248,7 @@
   }
 
   function resetGame() {
-    game.idx = firstNoteIdx(0); game.errors = 0; game.hits = 0; game.misses = new Set(); game.combo = 0; game.lastShown = null;
+    game.idx = firstNoteIdx(0); game.errors = 0; game.hits = 0; game.misses = new Set(); game.combo = 0; game.maxCombo = 0; game.lastShown = null; game.counted = false;
     $("#combo").hidden = true;
     game.stableMidi = null; game.reported = false; game.needRelease = false; game.silence = 0;
     $("#score-badge").hidden = true;
@@ -437,6 +438,7 @@
       return;
     }
     game.silence = 0;
+    game.lastHeard = performance.now();
     // détection automatique alto / soprano
     if (settings.oct === "auto") {
       if (p.midi >= 91 && settings.detectedOct !== 12) { settings.detectedOct = 12; saveSettings(); }
@@ -509,6 +511,8 @@
     const n = noteAt(game.idx);
     game.hits++;
     game.combo = (game.combo || 0) + 1;
+    game.maxCombo = Math.max(game.maxCombo || 0, game.combo);
+    window.Journal.hit(game.song.id, game.combo);
     floater(game.combo >= 5 ? `+1 · ×${game.combo}` : "+1");
     setCombo();
     scene.emit(n.midi);
@@ -529,7 +533,16 @@
     const total = game.notes.filter((n) => n.midi != null).length;
     const ratio = total / (total + game.errors);
     const stars = game.errors === 0 ? 3 : ratio >= 0.85 ? 2 : 1;
+    const oldStars = best[game.song.id] || 0;
     if (game.song.id && (!best[game.song.id] || best[game.song.id] < stars)) { best[game.song.id] = stars; store.set("best", best); }
+    const acc = Math.round(ratio * 100);
+    const jr = window.Journal.complete(game.song.id, { acc, combo: game.maxCombo || 0 });
+    game.counted = false;
+    const extra = [...jr.records];
+    if (game.song.id && stars > oldStars && oldStars > 0) extra.unshift(`Nouvelle étoile : ${"★".repeat(stars)} (avant ${"★".repeat(oldStars)})`);
+    $("#res-extra").innerHTML = extra.map((t) => `<li>🏆 ${escapeHtml(t)}</li>`).join("") +
+      jr.badges.map((b) => `<li class="badge">${b.ico} Badge débloqué : <b>${escapeHtml(b.nom)}</b></li>`).join("");
+    $("#res-extra").hidden = !extra.length && !jr.badges.length;
     scene.set("happy"); scene.sparkle(24);
     setTimeout(() => synth && synth.chime("win"), 150);
     $("#res-title").textContent = stars === 3 ? "Magnifique !" : stars === 2 ? "Très bien !" : "Mélodie terminée !";
@@ -622,6 +635,7 @@
     if (game.running) { game.running = false; $("#btn-start").textContent = "▶ Reprendre"; say("En pause."); scene.set("idle"); return; }
     if (!(await startMic())) return;
     if (game.idx >= game.notes.length) resetGame();
+    if (!game.counted) { game.counted = true; window.Journal.start(game.song.id); }
     game.running = true;
     $("#btn-start").textContent = "⏸ Pause";
     const n = noteAt(game.idx);
@@ -712,6 +726,43 @@
   // ------------------------------------------------------------ branchements
   const scene = new window.Scene($("#scene"));
   window.drawHeroIcon($("#logo-hero"), 4);
+
+  // ------------------------------------------------------------ carnet de progrès
+  function escapeHtml(t) { return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  window.Journal.setCatalog(allSongs());
+  function toast(html) {
+    const t = document.createElement("div");
+    t.className = "toast"; t.innerHTML = html;
+    (document.querySelector("dialog[open]") || document.body).appendChild(t);
+    setTimeout(() => t.classList.add("out"), 3200);
+    setTimeout(() => t.parentNode && t.parentNode.removeChild(t), 3800);
+  }
+  window.Journal.onBadge((b) => { toast(`<span>${b.ico}</span><div><small>Badge débloqué</small><b>${escapeHtml(b.nom)}</b></div>`); synth && synth.chime("win"); });
+  function updateTodayStrip() {
+    const t = window.Journal.todayInfo();
+    const pct = Math.min(100, Math.round((t.min / t.goal) * 100));
+    $("#today-strip").innerHTML = `<span>Aujourd'hui <b>${t.min}/${t.goal} min</b></span><span class="j-mini"><span style="width:${pct}%"></span></span>` +
+      `<span>${t.streak ? `📅 ${t.streak} jour${t.streak > 1 ? "s" : ""} d'affilée` : "📅 Joue un peu pour lancer ta série !"}</span>`;
+  }
+  function openJournal() {
+    stopAll();
+    window.Journal.render($("#journal-body"), {
+      songs: allSongs(), categories: window.CATEGORIES, best,
+      onOpen: (s) => openSong(s),
+    });
+    show("journal");
+  }
+  // une seconde de pratique compte quand on joue vraiment (son entendu récemment) ou qu'on écoute un morceau
+  setInterval(() => {
+    if (document.hidden) return;
+    const playing = $("#play").classList.contains("active") || recorder.on;
+    const heard = micOn && game.lastHeard && performance.now() - game.lastHeard < 6000;
+    if (playing && (heard || game.demoTimer)) window.Journal.tick(game.song && game.song.id);
+  }, 1000);
+  $("#btn-journal").onclick = openJournal;
+  $("#today-strip").onclick = openJournal;
+  $("#btn-journal-back").onclick = () => { show("home"); renderSongs(); };
+  updateTodayStrip();
 
   $("#btn-settings").onclick = openSettings;
   $("#btn-settings2").onclick = openSettings;

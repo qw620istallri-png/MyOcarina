@@ -29,14 +29,25 @@
     <button class="icon-btn" id="btn-settings" aria-label="Réglages">⚙</button>
   </header>
 
+  <button class="today-strip" id="today-strip" type="button" aria-label="Ouvrir mon carnet"></button>
   <nav class="tabs" id="cat-tabs" role="tablist"></nav>
   <div class="panel song-list" id="song-list"></div>
 
   <div class="home-tools">
+    <button class="btn big" id="btn-journal">📖 Mon carnet</button>
     <button class="btn" id="btn-tuner">🎯 Accordeur &amp; doigtés</button>
     <button class="btn" id="btn-new-song">✏️ Ajouter une mélodie</button>
   </div>
   <p class="footnote">Astuce : sur téléphone, « Ajouter à l'écran d'accueil » pour l'avoir comme une vraie appli, même hors-ligne.</p>
+</section>
+
+<!-- ============================== CARNET ============================== -->
+<section id="journal" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="btn-journal-back" aria-label="Retour">◀</button>
+    <div class="song-title"><b>Mon carnet</b><small>Ta pratique, tes morceaux, tes badges</small></div>
+  </div>
+  <div id="journal-body"></div>
 </section>
 
 <!-- ============================== JEU ============================== -->
@@ -177,6 +188,7 @@
   <h2 id="res-title">Bravo !</h2>
   <div class="stars" id="res-stars">★★★</div>
   <p id="res-text"></p>
+  <ul class="res-extra" id="res-extra" hidden></ul>
   <menu><button class="btn" id="res-again">↺ Rejouer</button><button class="btn big" id="res-ok">Continuer</button></menu>
 </dialog>
 
@@ -185,6 +197,7 @@
 <script src="js/music.js"></script>
 <script src="js/themes.js"></script>
 <script src="js/scene.js"></script>
+<script src="js/journal.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
