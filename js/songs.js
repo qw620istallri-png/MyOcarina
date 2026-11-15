@@ -53,16 +53,38 @@ window.SONGS = [
     tempo: 110, diff: 2, notes: "E5:.5 C5:.5 A5:2 | E5:.5 C5:.5 A5:2 | G5:.25 A5:.25 B5:.25 C6:.25 D6:1 | D6:.5 D6:.5 D6:1 D6:.5 E6:.5 D6:3"
   },
   {
-    id: "bolero", cat: "zelda", titre: "Boléro du Feu", sous: "Chant de téléportation",
-    tempo: 110, diff: 1, notes: "F5:.5 D5:.5 F5:.5 D5:.5 | A5:.5 F5:.5 A5:.5 F5:2"
+    // version longue d'après Part'Ocarina (tablature 11320) ; la montée finale,
+    // trop aiguë pour l'ocarina 11 trous, est rejouée une octave plus bas
+    id: "bolero", cat: "zelda", titre: "Boléro du Feu", sous: "Chant de téléportation – version longue",
+    tempo: 120, diff: 2, src: "partocarina", notes: "F5 D5 F5 D5 R:.5 A5 F5 A5 F5:2 | F5 D5 F5 D5 R:.5 A5 F5 A5 F5:2 | G5 E5 G5 E5 R:.5 Bb5 G5 Bb5 G5:2 | A5 F5 A5 F5 R:.5 D6 A5 D6 A5 | F6 D6 F6 D6 R:.5 A5 E5 A5 E5 | G5 D5 G5 D5 F5 R:.5 A5 F5 E5 D5:3"
   },
   {
-    id: "nocturne", cat: "zelda", titre: "Nocturne de l'Ombre", sous: "Chant de téléportation",
-    tempo: 90, diff: 1, notes: "B5 A5 A5:2 D5 | B5 A5 F5:3"
+    // version longue d'après Part'Ocarina (tablature 11282)
+    id: "nocturne", cat: "zelda", titre: "Nocturne de l'Ombre", sous: "Chant de téléportation – version longue",
+    tempo: 96, diff: 2, src: "partocarina", notes: "B5 A5:2 A5 D5 B5 A5 F5:3 | B5 A5:2 A5 D5 B5 A5 F5:3 | G#5 F#5 R:.5 F#5 D5 G#5 F#5 | A5 G5:2 G5 D5 A5 G5 F#5:3"
   },
   {
-    id: "prelude", cat: "zelda", titre: "Prélude de la Lumière", sous: "Chant de téléportation",
-    tempo: 100, diff: 1, notes: "D6 A5:2 D6 A5 | B5 D6:3"
+    // version longue d'après Part'Ocarina (tablature 11493)
+    id: "prelude", cat: "zelda", titre: "Prélude de la Lumière", sous: "Chant de téléportation – version longue",
+    tempo: 100, diff: 1, src: "partocarina", notes: "D6 A5 D6 A5 B5 D6:2 | D6 A5 D6 A5 B5 D6:2 | D6 D6 C#6:3"
+  },
+  {
+    // d'après Part'Ocarina (tablature 13244), transposée d'un ton
+    id: "po-stillness-rain", cat: "stardew", titre: "A Stillness in the Rain", sous: "Stardew Valley – jour de pluie (rythme approximatif)",
+    tempo: 100, diff: 2, theme: "orage", src: "partocarina",
+    notes: "D6:2 E6 D6:2 C6:2 A5:2 F5:2 G5 | A5 G5:2 E5:3 D5:2 E5 F5 G5 A5:2 F5:2 A5:2 A#5 A5 G5:2 F5 E5 | D5:2 E5 F5 G5 A5:2 F5:2 A5:2 A#5:2 D6 A#5:2 A5:2 G5 A5 G5:2 A#5 G5:2 A5:2 F5:2 D5:2 E5:2 F5:2 E5:2 D5:3 | D6:2 E6 D6:2 C6:2 A5:2 F5:2 G5 | A5 G5:2 E5:3 D5:2 E5 F5 G5 A5:2 F5:2 A5:2 A#5 A5 G5:2 F5 E5 | D5:2 E5 F5 G5 A5:2 F5:2 A5:2 A#5:2 D6 A#5:2 A5:2 G5 A5 G5:2 A#5 G5:2 A5:2 F5:2 D5:2 E5:2 F5:2 E5:2 D5:3"
+  },
+  {
+    // d'après Part'Ocarina (tablature 10300), transposée en Do
+    id: "po-may-it-be", cat: "lotr", titre: "May It Be", sous: "Enya – La Communauté de l'Anneau (rythme approximatif)",
+    tempo: 84, diff: 2, theme: "elfique", src: "partocarina",
+    notes: "C5 D5 E5:3 D5 E5 G5 A5:3 A5 C6 G5:2 | E5:2 C5 D5:3 C5 D5 E5:3 D5 E5 G5 A5:3 A5 C6 G5:2 | E5:2 C5 D5:3 | E5 G5 A5:2 G5 A5 C6 G5:3 E5 G5 A5:2 | G5 E5 D5 E5 G5:3 G5 A5 C6 G5 C6 C#6 D6 | C6 B5:2 B5 C6:2 G5 F5 E5 F5 G5 A5 G5:3 | E5 G5 A5 C6:2 G5 C6:2 D6 C6 B5:2 G5 | B5 C6:2 G5 A5 G5 F5 G5:3"
+  },
+  {
+    // d'après Part'Ocarina (tablature 9666)
+    id: "po-in-dreams", cat: "lotr", titre: "In Dreams", sous: "La Communauté de l'Anneau (rythme approximatif)",
+    tempo: 88, diff: 2, theme: "comte", src: "partocarina",
+    notes: "D5 E5 F#5:2 A5 F#5 E5 D5:3 D5 F#5 A5 | B5:3 D6 C#6 A5 F#5:2 G5 F#5 E5:3 | D5 C5 C5 C5 D5:3 G5 A5 A#5 A5 G5 F5 G5 | A5 G5 F5 E5 D5 C5 C5 C5 D5:2 | G5 A5 A#5:2 A5 A#5 C6 A#5 C6 D6:2"
   },
 ];
 

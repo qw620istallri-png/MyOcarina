@@ -15,6 +15,6 @@ Settings → Pages → Source « Deploy from a branch » → `main` / `(root)`. 
 Les doigtés sont dans `js/music.js` (`FINGERINGS`).
 
 ## Crédits
-Les grands morceaux viennent des tablatures d'[OcWalk](https://www.ocwalk.com), converties par `tools/convert-ocwalk.py` (rythme approximatif). Usage privé.
+Les grands morceaux viennent des tablatures d'[OcWalk](https://www.ocwalk.com), converties par `tools/convert-ocwalk.py` (rythme approximatif). D'autres (versions longues du Boléro, du Nocturne et du Prélude, A Stillness in the Rain, May It Be, In Dreams) viennent des tablatures de la communauté [Part'Ocarina](https://part-ocarina.com), converties par `tools/convert-partocarina.py <slug ou id>`. Usage privé.
 
 Décors peints : images CC0 d'OpenGameArt (ansimuz, FabinhoSC, Blackwolfdave), détail dans `assets/bg/CREDITS.txt`.
