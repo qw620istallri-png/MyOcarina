@@ -226,61 +226,86 @@
       for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
       this.noiseBuf = nb;
     }
-    note(midi, start, dur, vol = 1) {
-      const ctx = this.ctx;
-      const f = 440 * Math.pow(2, (midi - 69) / 12);
-      const end = start + Math.max(0.08, dur);
-      const rel = 0.07;
-      const stopAt = end + rel + 0.15;
-
-      // enveloppe générale (attaque douce, petit gonflement du souffle)
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, start);
-      g.gain.linearRampToValueAtTime(0.85 * vol, start + 0.03);
-      g.gain.setTargetAtTime(0.7 * vol, start + 0.04, 0.12);
-      g.gain.setTargetAtTime(0.0001, end, rel / 3);
-      g.connect(this.out);
-
-      // oscillateur principal : la note se pose en montant un peu, baisse en fin de souffle
+    // Une « voix » = un souffle continu : les notes d'une même phrase sont
+    // liées (legato) — la hauteur glisse très vite d'une note à l'autre,
+    // avec juste un petit coup de langue (« dou ») pour marquer chaque note.
+    voice(start, vol = 1) {
+      const ctx = this.ctx, self = this;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, start); g.connect(this.out);
       const o = ctx.createOscillator(); o.setPeriodicWave(this.wave);
-      o.frequency.setValueAtTime(f * 0.982, start);
-      o.frequency.exponentialRampToValueAtTime(f, start + 0.06);
-      o.frequency.setValueAtTime(f, end);
-      o.frequency.exponentialRampToValueAtTime(f * 0.985, end + rel);
-      // vibrato de souffle (hauteur + volume) qui arrive doucement sur les notes tenues
       const lfo = ctx.createOscillator(); lfo.frequency.value = 4.8 + Math.random() * 0.6;
       const vib = ctx.createGain(); vib.gain.setValueAtTime(0, start);
-      vib.gain.setValueAtTime(0, start + Math.min(0.25, dur * 0.4));
-      vib.gain.linearRampToValueAtTime(f * 0.0035, start + Math.min(0.7, dur * 0.8));
       const trem = ctx.createGain(); trem.gain.value = 1;
       const tremDepth = ctx.createGain(); tremDepth.gain.setValueAtTime(0, start);
-      tremDepth.gain.linearRampToValueAtTime(0.07, start + Math.min(0.7, dur * 0.8));
-      lfo.connect(vib); vib.connect(o.frequency);
-      lfo.connect(tremDepth); tremDepth.connect(trem.gain);
+      lfo.connect(vib); vib.connect(o.frequency); lfo.connect(tremDepth); tremDepth.connect(trem.gain);
       o.connect(trem); trem.connect(g);
-
-      // souffle continu, autour des aigus de la note
+      // souffle : large bande dans les aigus + bande étroite sur la note
       const n = ctx.createBufferSource(); n.buffer = this.noiseBuf; n.loop = true;
-      n.loopStart = Math.random();
-      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = Math.min(9000, f * 2.6); bp.Q.value = 0.9;
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.9;
       const ng = ctx.createGain(); ng.gain.value = 0.07;
-      n.connect(bp); bp.connect(ng); ng.connect(g);
-      // bruit étroit centré sur la note (le souffle « chante » avec la note)
-      const bp2 = ctx.createBiquadFilter(); bp2.type = "bandpass"; bp2.frequency.value = f; bp2.Q.value = 12;
+      const bp2 = ctx.createBiquadFilter(); bp2.type = "bandpass"; bp2.Q.value = 12;
       const ng2 = ctx.createGain(); ng2.gain.value = 0.18;
-      n.connect(bp2); bp2.connect(ng2); ng2.connect(g);
-
-      // « chiff » : petite bouffée d'air à l'attaque
+      n.connect(bp); bp.connect(ng); ng.connect(g); n.connect(bp2); bp2.connect(ng2); ng2.connect(g);
+      o.start(start); lfo.start(start); n.start(start, Math.random());
+      let prevF = 0, prevMidi = null, lastF = 0;
+      return {
+        note(midi, t, dur) {
+          const f = 440 * Math.pow(2, (midi - 69) / 12);
+          const lvl = 0.72 * vol;
+          if (!prevF) {
+            // attaque : la note se pose en montant un peu
+            o.frequency.setValueAtTime(f * 0.982, t);
+            o.frequency.exponentialRampToValueAtTime(f, t + 0.06);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.linearRampToValueAtTime(0.88 * vol, t + 0.03);
+            g.gain.setTargetAtTime(lvl, t + 0.04, 0.1);
+            self.chiff(t, 0.22 * vol, f);
+          } else {
+            // liaison : glissé très court + petit creux de souffle (plus marqué si même note)
+            const same = midi === prevMidi;
+            o.frequency.setValueAtTime(prevF, t);
+            o.frequency.exponentialRampToValueAtTime(f, t + (same ? 0.005 : 0.022));
+            g.gain.setTargetAtTime(lvl * (same ? 0.18 : 0.55), Math.max(0, t - 0.012), same ? 0.006 : 0.008);
+            g.gain.setTargetAtTime(lvl, t + (same ? 0.02 : 0.012), 0.03);
+            self.chiff(t, (same ? 0.12 : 0.06) * vol, f);
+          }
+          bp.frequency.setValueAtTime(Math.min(9000, f * 2.6), t);
+          bp2.frequency.setValueAtTime(f, t);
+          // vibrato seulement sur les notes assez longues
+          vib.gain.setValueAtTime(0, t); tremDepth.gain.setValueAtTime(0, t);
+          if (dur > 0.35) {
+            vib.gain.setValueAtTime(0, t + Math.min(0.25, dur * 0.4));
+            vib.gain.linearRampToValueAtTime(f * 0.0035, t + Math.min(0.8, dur * 0.85));
+            tremDepth.gain.linearRampToValueAtTime(0.07, t + Math.min(0.8, dur * 0.85));
+          }
+          prevF = f; prevMidi = midi; lastF = f;
+        },
+        end(t) {
+          const rel = 0.07;
+          g.gain.setTargetAtTime(0.0001, t, rel / 3);
+          if (lastF) { o.frequency.setValueAtTime(lastF, t); o.frequency.exponentialRampToValueAtTime(lastF * 0.985, t + rel); }
+          vib.gain.setValueAtTime(0, t);
+          const stopAt = t + rel + 0.2;
+          o.stop(stopAt); lfo.stop(stopAt); n.stop(stopAt);
+        },
+      };
+    }
+    chiff(t, amp, f) {
+      const ctx = this.ctx;
       const c = ctx.createBufferSource(); c.buffer = this.noiseBuf;
       const hp = ctx.createBiquadFilter(); hp.type = "bandpass"; hp.frequency.value = Math.min(10000, f * 4); hp.Q.value = 0.7;
       const cg = ctx.createGain();
-      cg.gain.setValueAtTime(0.0001, start);
-      cg.gain.linearRampToValueAtTime(0.22 * vol, start + 0.008);
-      cg.gain.exponentialRampToValueAtTime(0.0001, start + 0.07);
+      cg.gain.setValueAtTime(0.0001, t);
+      cg.gain.linearRampToValueAtTime(amp, t + 0.008);
+      cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
       c.connect(hp); hp.connect(cg); cg.connect(this.out);
-
-      [o, lfo, n].forEach((x) => { x.start(start); x.stop(stopAt); });
-      c.start(start, Math.random()); c.stop(start + 0.1);
+      c.start(t, Math.random()); c.stop(t + 0.1);
+    }
+    // une note isolée (aperçu, indice, petites musiques)
+    note(midi, start, dur, vol = 1) {
+      const v = this.voice(start, vol);
+      v.note(midi, start, Math.max(0.08, dur));
+      v.end(start + Math.max(0.08, dur));
     }
     chime(kind) {
       const t = this.ctx.currentTime + 0.02;

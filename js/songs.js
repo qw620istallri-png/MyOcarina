@@ -49,8 +49,8 @@ window.SONGS = [
     notes: "F6 D#6 D6 C6 A#5 C6 A5:2 | G5 F5 D#5 F5 G5 F5:2 | F6 D#6 D6 C6 A#5 C6 A5:2 | G5 F5 G5 A#5 C6 A#5:2 | A#5 A5 A#5 C6 A#5 A5 F5 D#5:2 | F5 G5 F5 D5 F5 C5:2 | A5 A#5 C6 A#5 A5 F5:2 | D#5 D5 D#5 F5 D5 D#5 F5:2 | A5 A#5 C6 A#5 A5 F5 D#5:2 | F5 G5 F5 D5 F5 C5:2 | G5 A5 A#5 C6 A#5 A5 F5 G5:2 | F5 D#5 D5 D#5 G5 F5:2"
   },
   {
-    id: "soleil", cat: "zelda", titre: "Chant du Soleil", sous: "Chant d'ocarina",
-    tempo: 110, diff: 1, notes: "A5:.5 F5:.5 D6:2 | A5:.5 F5:.5 D6:2"
+    id: "soleil", cat: "zelda", titre: "Chant du Soleil", sous: "Version longue (avec la montée finale)",
+    tempo: 110, diff: 2, notes: "E5:.5 C5:.5 A5:2 | E5:.5 C5:.5 A5:2 | G5:.25 A5:.25 B5:.25 C6:.25 D6:1 | D6:.5 D6:.5 D6:1 D6:.5 E6:.5 D6:3"
   },
   {
     id: "bolero", cat: "zelda", titre: "Boléro du Feu", sous: "Chant de téléportation",

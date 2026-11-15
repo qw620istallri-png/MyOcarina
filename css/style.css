@@ -138,7 +138,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 @keyframes badflash { 25% { transform: translateX(-4px); background: #f8d0c8; } 75% { transform: translateX(4px); } }
 
 .track { margin-top: 10px; overflow-x: auto; padding: 8px; scroll-behavior: smooth; scrollbar-width: thin; }
-.track-inner { display: flex; gap: 4px; align-items: flex-end; min-height: 64px; }
+.track-inner { display: flex; gap: 4px; align-items: flex-end; min-height: 64px; width: max-content; }
 .tile {
   flex: none; min-width: 38px; height: 54px; border: 2px solid var(--wood); border-radius: 4px;
   display: flex; flex-direction: column; justify-content: flex-end; align-items: center; font-size: 14px;

@@ -287,11 +287,7 @@
       t.classList.toggle("cur", i === game.idx);
       t.classList.toggle("miss", game.misses.has(i));
     });
-    const cur = $(`#track-inner .tile[data-i="${game.idx}"]`);
-    if (cur) {
-      const tr = $("#track");
-      tr.scrollLeft = cur.offsetLeft - tr.clientWidth / 2 + cur.clientWidth / 2;
-    }
+    centerTrack();
   }
 
   // Aller directement à une note (frise ou partition) : on montre son doigté,
@@ -347,6 +343,22 @@
     if (keep) setMode(keep);
     restart($(".song-title"), "pop");
   }
+
+  // garde la note en cours au milieu de la frise (des marges invisibles
+  // de chaque côté permettent de centrer aussi la première et la dernière note)
+  function centerTrack(instant) {
+    const tr = $("#track"), inner = $("#track-inner");
+    if (!tr || !inner) return;
+    const pad = Math.max(0, tr.clientWidth / 2 - 24) + "px";
+    if (inner.style.paddingLeft !== pad) { inner.style.paddingLeft = pad; inner.style.paddingRight = pad; instant = true; }
+    const cur = $(`#track-inner .tile[data-i="${game.idx}"]`) || $(`#track-inner .tile[data-i="${prevNoteIdx(game.idx)}"]`);
+    if (!cur) return;
+    const a = tr.getBoundingClientRect(), b = cur.getBoundingClientRect();
+    const target = tr.scrollLeft + (b.left + b.width / 2) - (a.left + a.width / 2);
+    if (instant) { tr.style.scrollBehavior = "auto"; tr.scrollLeft = target; tr.style.scrollBehavior = ""; }
+    else tr.scrollTo({ left: target, behavior: "smooth" });
+  }
+  window.addEventListener("resize", () => centerTrack(true));
 
   function noteAt(i) { const j = firstNoteIdx(i); return j < game.notes.length ? game.notes[j] : null; }
   function showNow(midi) {
@@ -555,20 +567,35 @@
   }
 
   // ------------------------------------------------------------ mode écoute (démo)
+  // Les notes sont programmées au fil de l'eau (une seconde d'avance) : même
+  // un très long morceau ne charge jamais le téléphone d'un coup.
+  // Dans une phrase, les notes sont liées dans un même souffle.
   function playDemo(notes, opts = {}) {
     audio();
     stopDemo();
     const tempo = (opts.tempo || 90) * (opts.speed || 1);
     const beat = 60 / tempo;
+    const sh = octShift();
     let t = ctx.currentTime + 0.15;
-    const times = notes.map((n) => {
-      const st = t;
-      if (n.midi != null) synth.note(n.midi + octShift(), st, n.dur * beat * 0.92);
-      t += n.dur * beat;
-      return st;
-    });
+    const times = notes.map((n) => { const st = t; t += n.dur * beat; return st; });
+    const endT = t;
     game.demoStart = times;
     game.demoIdx = -1;
+    let next = 0, voice = null;
+    const schedule = () => {
+      const horizon = ctx.currentTime + 1.0;
+      while (next < notes.length && times[next] < horizon) {
+        const i = next++, n = notes[i], nx = notes[i + 1];
+        if (n.midi == null) { if (voice) { voice.end(times[i]); voice = null; } continue; }
+        const d = n.dur * beat;
+        if (!voice) voice = synth.voice(times[i]);
+        voice.note(n.midi + sh, times[i], d);
+        const phraseEnd = !nx || nx.midi == null || nx.phrase !== n.phrase;
+        if (phraseEnd) { voice.end(times[i] + (nx && nx.midi == null ? d * 0.97 : d - Math.min(0.12, d * 0.18))); voice = null; }
+      }
+    };
+    schedule();
+    game.demoSched = setInterval(schedule, 150);
     const tick = () => {
       const now = ctx.currentTime;
       let i = -1;
@@ -577,14 +604,15 @@
         game.demoIdx = i;
         opts.onNote && opts.onNote(i);
       }
-      if (now > t + 0.1) { stopDemo(); opts.onEnd && opts.onEnd(); return; }
+      if (now > endT + 0.1) { stopDemo(); opts.onEnd && opts.onEnd(); return; }
       game.demoTimer = requestAnimationFrame(tick);
     };
     game.demoTimer = requestAnimationFrame(tick);
-    game.demoEndAt = t;
+    game.demoEndAt = endT;
   }
   function stopDemo() {
     if (game.demoTimer) cancelAnimationFrame(game.demoTimer);
+    clearInterval(game.demoSched);
     game.demoTimer = null;
     if (synth && game.demoEndAt && ctx.currentTime < game.demoEndAt) {
       // couper le son en recréant la sortie
