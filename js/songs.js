@@ -43,6 +43,12 @@ window.SONGS = [
     tempo: 84, diff: 1, notes: "B5:2 D6 A5:3 | B5:2 D6 A5:3"
   },
   {
+    // d'après une tablature 12 trous (page 1), transposée d'un demi-ton pour tenir dans Do → Fa aigu
+    id: "valley-comes-alive", cat: "stardew", titre: "The Valley Comes Alive", sous: "Stardew Valley – le printemps (rythme approximatif)",
+    tempo: 104, diff: 2, theme: "vallee",
+    notes: "F6 D#6 D6 C6 A#5 C6 A5:2 | G5 F5 D#5 F5 G5 F5:2 | F6 D#6 D6 C6 A#5 C6 A5:2 | G5 F5 G5 A#5 C6 A#5:2 | A#5 A5 A#5 C6 A#5 A5 F5 D#5:2 | F5 G5 F5 D5 F5 C5:2 | A5 A#5 C6 A#5 A5 F5:2 | D#5 D5 D#5 F5 D5 D#5 F5:2 | A5 A#5 C6 A#5 A5 F5 D#5:2 | F5 G5 F5 D5 F5 C5:2 | G5 A5 A#5 C6 A#5 A5 F5 G5:2 | F5 D#5 D5 D#5 G5 F5:2"
+  },
+  {
     id: "soleil", cat: "zelda", titre: "Chant du Soleil", sous: "Chant d'ocarina",
     tempo: 110, diff: 1, notes: "A5:.5 F5:.5 D6:2 | A5:.5 F5:.5 D6:2"
   },
