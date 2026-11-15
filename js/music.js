@@ -192,13 +192,33 @@
   // ------------------------------------------------------------------
   //  Petit synthé « ocarina » (sinus doux + souffle + vibrato)
   // ------------------------------------------------------------------
+  // Synthèse d'ocarina : un ocarina (flûte globulaire) donne un son presque
+  // sinusoïdal, avec très peu d'harmoniques, beaucoup de souffle, un petit
+  // « chiff » d'attaque, une note qui monte légèrement en se posant et qui
+  // baisse un peu quand le souffle s'arrête. Une petite réverbération
+  // donne la sensation d'une pièce.
   class OcarinaSynth {
     constructor(ctx) {
       this.ctx = ctx;
       this.out = ctx.createGain();
-      this.out.gain.value = 0.35;
+      this.out.gain.value = 0.42;
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 7000; lp.Q.value = 0.5;
       const comp = ctx.createDynamicsCompressor();
-      this.out.connect(comp); comp.connect(ctx.destination);
+      comp.threshold.value = -18; comp.ratio.value = 3;
+      this.out.connect(lp); lp.connect(comp); comp.connect(ctx.destination);
+      // réverbération : réponse impulsionnelle générée (bruit qui s'éteint)
+      try {
+        const rl = Math.floor(ctx.sampleRate * 1.6), ir = ctx.createBuffer(2, rl, ctx.sampleRate);
+        for (let c = 0; c < 2; c++) {
+          const d = ir.getChannelData(c);
+          for (let i = 0; i < rl; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / rl, 3.2) * (i < 200 ? i / 200 : 1);
+        }
+        const conv = ctx.createConvolver(); conv.buffer = ir;
+        const wet = ctx.createGain(); wet.gain.value = 0.22;
+        lp.connect(conv); conv.connect(wet); wet.connect(comp);
+      } catch (e) { /* pas de réverbération sur ce navigateur */ }
+      // timbre : fondamentale + traces d'harmoniques
+      this.wave = ctx.createPeriodicWave(new Float32Array([0, 0, 0, 0, 0, 0]), new Float32Array([0, 1, 0.055, 0.022, 0.008, 0.004]));
       // bruit de souffle partagé
       const len = ctx.sampleRate * 2;
       const nb = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -210,29 +230,57 @@
       const ctx = this.ctx;
       const f = 440 * Math.pow(2, (midi - 69) / 12);
       const end = start + Math.max(0.08, dur);
+      const rel = 0.07;
+      const stopAt = end + rel + 0.15;
+
+      // enveloppe générale (attaque douce, petit gonflement du souffle)
       const g = ctx.createGain();
-      g.gain.setValueAtTime(0, start);
-      g.gain.linearRampToValueAtTime(0.9 * vol, start + 0.035);
-      g.gain.setTargetAtTime(0.75 * vol, start + 0.05, 0.1);
-      g.gain.setTargetAtTime(0, end - 0.02, 0.035);
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.linearRampToValueAtTime(0.85 * vol, start + 0.03);
+      g.gain.setTargetAtTime(0.7 * vol, start + 0.04, 0.12);
+      g.gain.setTargetAtTime(0.0001, end, rel / 3);
       g.connect(this.out);
 
-      const o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = f;
-      const o2 = ctx.createOscillator(); o2.type = "triangle"; o2.frequency.value = f * 2;
-      const g2 = ctx.createGain(); g2.gain.value = 0.04;
-      // vibrato qui arrive doucement
-      const lfo = ctx.createOscillator(); lfo.frequency.value = 5.2;
-      const lg = ctx.createGain();
-      lg.gain.setValueAtTime(0, start);
-      lg.gain.linearRampToValueAtTime(f * 0.004, start + Math.min(0.5, dur * 0.7));
-      lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
-      o.connect(g); o2.connect(g2); g2.connect(g);
-      // souffle
+      // oscillateur principal : la note se pose en montant un peu, baisse en fin de souffle
+      const o = ctx.createOscillator(); o.setPeriodicWave(this.wave);
+      o.frequency.setValueAtTime(f * 0.982, start);
+      o.frequency.exponentialRampToValueAtTime(f, start + 0.06);
+      o.frequency.setValueAtTime(f, end);
+      o.frequency.exponentialRampToValueAtTime(f * 0.985, end + rel);
+      // vibrato de souffle (hauteur + volume) qui arrive doucement sur les notes tenues
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 4.8 + Math.random() * 0.6;
+      const vib = ctx.createGain(); vib.gain.setValueAtTime(0, start);
+      vib.gain.setValueAtTime(0, start + Math.min(0.25, dur * 0.4));
+      vib.gain.linearRampToValueAtTime(f * 0.0035, start + Math.min(0.7, dur * 0.8));
+      const trem = ctx.createGain(); trem.gain.value = 1;
+      const tremDepth = ctx.createGain(); tremDepth.gain.setValueAtTime(0, start);
+      tremDepth.gain.linearRampToValueAtTime(0.07, start + Math.min(0.7, dur * 0.8));
+      lfo.connect(vib); vib.connect(o.frequency);
+      lfo.connect(tremDepth); tremDepth.connect(trem.gain);
+      o.connect(trem); trem.connect(g);
+
+      // souffle continu, autour des aigus de la note
       const n = ctx.createBufferSource(); n.buffer = this.noiseBuf; n.loop = true;
-      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 2;
-      const ng = ctx.createGain(); ng.gain.value = 0.05;
+      n.loopStart = Math.random();
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = Math.min(9000, f * 2.6); bp.Q.value = 0.9;
+      const ng = ctx.createGain(); ng.gain.value = 0.07;
       n.connect(bp); bp.connect(ng); ng.connect(g);
-      [o, o2, lfo, n].forEach((s) => { s.start(start); s.stop(end + 0.3); });
+      // bruit étroit centré sur la note (le souffle « chante » avec la note)
+      const bp2 = ctx.createBiquadFilter(); bp2.type = "bandpass"; bp2.frequency.value = f; bp2.Q.value = 12;
+      const ng2 = ctx.createGain(); ng2.gain.value = 0.18;
+      n.connect(bp2); bp2.connect(ng2); ng2.connect(g);
+
+      // « chiff » : petite bouffée d'air à l'attaque
+      const c = ctx.createBufferSource(); c.buffer = this.noiseBuf;
+      const hp = ctx.createBiquadFilter(); hp.type = "bandpass"; hp.frequency.value = Math.min(10000, f * 4); hp.Q.value = 0.7;
+      const cg = ctx.createGain();
+      cg.gain.setValueAtTime(0.0001, start);
+      cg.gain.linearRampToValueAtTime(0.22 * vol, start + 0.008);
+      cg.gain.exponentialRampToValueAtTime(0.0001, start + 0.07);
+      c.connect(hp); hp.connect(cg); cg.connect(this.out);
+
+      [o, lfo, n].forEach((x) => { x.start(start); x.stop(stopAt); });
+      c.start(start, Math.random()); c.stop(start + 0.1);
     }
     chime(kind) {
       const t = this.ctx.currentTime + 0.02;

@@ -10,228 +10,45 @@
     Y: "#e8c66a", D: "#b8923a", t: "#f2ead8", T: "#cfc4a8", j: "#3ab0a0", m: "#a8b0c0", M: "#6a7282",
     c: "#8a8e98", C: "#5e626c", i: "#e6ecf4",
   };
+  Object.assign(PAL, (window.HERO && window.HERO.pal) || {});
 
-  // Corps du héros (20 x 21). Bonnet vert pointu qui retombe, écharpe rouge.
-  const BODY = [
-    "..................kk..",
-    "................kkGk..",
-    "..............kkgGk...",
-    ".......kkkkkkkgggk....",
-    ".....kkggglggggGk.....",
-    "....kgggllgggggGk.....",
-    "....kgglgggggggGk.....",
-    "...kgglggggggggGGk....",
-    "...kyyyyyyyyyyyyyk....",
-    "...kHhhhhhhhhhhhHk....",
-    "...khhssssssssshhk....",
-    ".ksshsswessswesshssk..",
-    "..ksssseesssseesssk...",
-    "...kspssssssssspsk....",
-    "...ksssssskksssssk....",
-    "....ksssssssssssk.....",
-    ".......kSSSSSSk.......",
-    ".....krrrrrrrrrrk.....",
-    "....kgrRrggggggggk....",
-    "....kggrRggggggggk....",
-    "...kgggrRgggggggggk...",
-    "...kggggggggggggggk...",
-    "...kbbbbbbybbbbbbbk...",
-    "...kggggggggggggggk...",
-    "...kGGGGGGGGGGGGGGk...",
-    ".....knnnk..knnnk.....",
-    ".....knnNk..kNnnk.....",
-    ".....knnnk..knnnk.....",
-    "....kBBBBk..kBBBBk....",
-    "....kkkkkk..kkkkkk....",
-  ];
-  // Ocarina transversal tenu à la bouche (calque par-dessus le corps)
-  const OCA = [
-    "......kkkkkkkkkkk.....",
-    ".....kWoooooooooOOk...",
-    "....sskOOOOOOOOOOkss..",
-    "....ggkkkkkkkkkkkgg...",
-  ];
-  const OCA_Y = 14;
-
-  // Chapeaux, capuches, cheveux… (remplacent les lignes 0 à 8 du héros)
-  const COSTUMES = {
- "paille": {
-  "hat": [
-   "......................",
-   "......................",
-   "......................",
-   "........kkkkkk........",
-   ".......kYYYYYYk.......",
-   "......kYYYYYYYYk......",
-   "......krrrrrrrrk......",
-   ".kkkkkkYYYYYYYYkkkkkk.",
-   "kYYYYDYYYYYYYYYYDYYYYk"
-  ]
- },
- "turban": {
-  "hat": [
-   "......................",
-   "......................",
-   "......................",
-   "..........kk..........",
-   "........kkjjkk........",
-   "......kkttTTttkk......",
-   ".....kttTtjjtTttk.....",
-   "....kttttTjjTttttk....",
-   "...kTTTTTTTTTTTTTk...."
-  ]
- },
- "hobbit": {
-  "hat": [
-   "......................",
-   "......................",
-   "......................",
-   "......................",
-   "......................",
-   ".......kkkkkkkk.......",
-   ".....kkhHhhHhhHk......",
-   "....khHhhHhhHhhHk.....",
-   "...khhHhhHhhHhhHhk...."
-  ]
- },
- "casque": {
-  "hat": [
-   "......................",
-   "..........kk..........",
-   ".........krrk.........",
-   ".........krrk.........",
-   "........kkrrkk........",
-   "......kkmmmmmmkk......",
-   ".....kmmWmmmmmmMk.....",
-   "....kmmmmmmmmmmMMk....",
-   "...kMMMMMMMMMMMMMk...."
-  ]
- },
- "bandana": {
-  "hat": [
-   "......................",
-   "......................",
-   "......................",
-   "......................",
-   "......................",
-   ".......kkkkkkkk.......",
-   ".....krrrrrrrrrk......",
-   "....krrwrrrrwrrrk.....",
-   "...kRRRRRRRRRRRRRkrk.."
-  ]
- },
- "capuche": {
-  "hat": [
-   "......................",
-   "......................",
-   "......................",
-   "........kkkkkk........",
-   "......kkccccccck......",
-   ".....kcccccccccck.....",
-   "....kcccccccccccCk....",
-   "...kcccccccccccccCk...",
-   "..kccCCCCCCCCCCCcck..."
-  ],
-  "sides": [
-   "..kc",
-   "ck..."
-  ],
-  "sideRows": [
-   9,
-   10,
-   11,
-   12,
-   13,
-   14,
-   15,
-   16
-  ]
- },
- "elfe": {
-  "hat": [
-   "......................",
-   "......................",
-   "......................",
-   "......................",
-   "......................",
-   "......................",
-   "......kkkkkkkkkk......",
-   "....kkhhhhhhhhhhkk....",
-   "...kiiiiiijiiiiiik...."
-  ],
-  "sides": [
-   ".khh",
-   "hhk.."
-  ],
-  "sideRows": [
-   9,
-   10,
-   11,
-   12,
-   13,
-   14,
-   15,
-   16,
-   17,
-   18,
-   19,
-   20,
-   21
-  ]
- },
- "nuit": {
-  "over": [
-   [
-    0,
-    [
-     "...................kk.",
-     "..................kwwk",
-     "..................kwwk",
-     "...................kk."
-    ]
-   ]
-  ]
- },
- "nain": {
-  "hat": [
-   "......................",
-   "......................",
-   "......................",
-   "........kkkkkk........",
-   "......kkccccccck......",
-   ".....kcccccccccck.....",
-   "....kcccccccccccCk....",
-   "...kcccccccccccccCk...",
-   "..kccCCCCCCCCCCCcck..."
-  ],
-  "sides": [
-   "..kc",
-   "ck..."
-  ],
-  "sideRows": [
-   9,
-   10,
-   11,
-   12,
-   13,
-   14,
-   15,
-   16
-  ],
-  "over": [
-   [
-    17,
-    [
-     "......kHHHHHHHHk......",
-     ".......kHHhHHhHk......",
-     "........kHHHHk........",
-     ".........kHHk........."
-    ]
-   ]
-  ]
- }
-};
-
+  // ---- héros : assemblage des calques (corps, visage, chapeau du décor, ocarina) + contour
+  const HD = window.HERO;
+  const heroCache = {};
+  function heroGrid(costume, state, blink) {
+    const key = costume + "|" + state + "|" + (blink ? 1 : 0);
+    if (heroCache[key]) return heroCache[key];
+    const c = HD.C[costume] || HD.C.default;
+    const eyes = { idle: blink ? "eyesClosed" : "eyesOpen", play: "eyesClosed", happy: "eyesHappy", oops: "eyesOops" }[state];
+    const lay = [];
+    if (c.back) lay.push(c.back);
+    lay.push(HD.L.body, HD.L.head);
+    if (costume !== "hobbit") lay.push(HD.L.hair);
+    lay.push(HD.L[eyes]);
+    if (state === "happy") lay.push(HD.L.mouthSmile);
+    lay.push(c.hat);
+    if (c.front) lay.push(c.front);
+    lay.push(state === "happy" ? HD.L.armsUp : HD.L.oca);
+    const W = HD.W, H = HD.H, g = new Array(W * H).fill(null);
+    lay.forEach((L) => L.forEach(([y, x0, str]) => {
+      for (let i = 0; i < str.length; i++) { const ch = str[i]; if (ch !== ".") g[y * W + x0 + i] = ch === "_" ? null : ch; }
+    }));
+    const out = g.slice();
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (g[y * W + x]) continue;
+      if ((x > 0 && g[y * W + x - 1]) || (x < W - 1 && g[y * W + x + 1]) || (y > 0 && g[(y - 1) * W + x]) || (y < H - 1 && g[(y + 1) * W + x])) out[y * W + x] = "k";
+    }
+    return (heroCache[key] = out);
+  }
+  function drawHero(ctx, grid, x, y, s, pal, rows) {
+    const W = HD.W, H = rows || HD.H;
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const c = grid[j * W + i];
+      if (!c) continue;
+      ctx.fillStyle = pal[c] || c;
+      ctx.fillRect(x + i * s, y + j * s, s, s);
+    }
+  }
 
   function drawRows(ctx, rows, x, y, s, pal) {
     for (let j = 0; j < rows.length; j++) {
@@ -319,42 +136,16 @@
       if (this.state === "play") bob = Math.round(Math.sin(this.t * 6) * 0.5 + 0.5);
       if (this.state === "happy") bob = -Math.round(Math.abs(Math.sin(this.stateT * 9)) * 5);
       if (this.state === "oops") shake = Math.round(Math.sin(this.stateT * 40) * 1);
-      const hx0 = 74 + shake, hy0 = 28 + bob;
+      const hx0 = 76 + shake, hy0 = 32 + bob;
       // ombre
-      this.px(82, 87, 30, 3, "rgba(40,60,30,.35)");
-      const body = BODY.slice();
-      const setc = (row, col, ch) => { body[row] = body[row].slice(0, col) + ch + body[row].slice(col + 1); };
-      const eyes = (kind) => {
-        [7, 8, 12, 13].forEach((c) => { setc(11, c, "s"); setc(12, c, "s"); });
-        if (kind === "closed") [7, 8, 12, 13].forEach((c) => setc(12, c, "k"));
-        else if (kind === "happy") { [7, 8, 12, 13].forEach((c) => setc(11, c, "k")); [6, 9, 11, 14].forEach((c) => setc(12, c, "k")); }
-        else if (kind === "oops") { setc(11, 7, "k"); setc(12, 8, "k"); setc(11, 13, "k"); setc(12, 12, "k"); }
-      };
+      this.px(82, 87, 28, 2, "rgba(40,60,30,.35)"); this.px(85, 89, 22, 1, "rgba(40,60,30,.2)");
       const blink = (this.t % 4) < 0.12;
-      if (this.state === "play") eyes("closed");
-      else if (this.state === "happy") eyes("happy");
-      else if (this.state === "oops") eyes("oops");
-      else if (blink) eyes("closed");
-      // costume du décor
       const th0 = window.THEMES && window.THEMES[this.theme];
-      const cos = th0 && th0.costume ? COSTUMES[th0.costume] : null;
-      if (cos) {
-        if (cos.hat) cos.hat.forEach((r, i) => (body[i] = r));
-        if (cos.sides) cos.sideRows.forEach((r) => { if (body[r]) body[r] = cos.sides[0] + body[r].slice(4, 17) + cos.sides[1]; });
-      }
-      const hs = s * 2; // le héros est dessiné en « gros pixels »
-      const pal = this.outfit;
-      drawRows(ctx, body, hx0 * s, hy0 * s, hs, pal);
-      if (cos && cos.over) cos.over.forEach(([y, rows]) => drawRows(ctx, rows, hx0 * s, (hy0 + y * 2) * s, hs, pal));
-      if (this.state !== "happy") {
-        drawRows(ctx, OCA, hx0 * s, (hy0 + OCA_Y * 2) * s, hs, pal);
-      } else {
-        drawRows(ctx, ["ks................ks", "gk................kg", "gk................kg"], (hx0 + 1) * s, (hy0 + 15 * 2) * s, hs, pal);
-        drawRows(ctx, ["kkkkkk", "kWoooOk", "kOOOOk", ".kkkk"], (hx0 + 38) * s, (hy0 + 14) * s, hs);
-      }
+      const st = ["play", "happy", "oops"].includes(this.state) ? this.state : "idle";
+      drawHero(ctx, heroGrid((th0 && th0.costume) || "default", st, blink), hx0 * s, hy0 * s, s, this.outfit);
       if (this.state === "oops") {
         // goutte de sueur
-        this.px(hx0 + 38, hy0 + 16, 2, 2, "#7fb4ff"); this.px(hx0 + 37, hy0 + 18, 4, 4, "#7fb4ff");
+        this.px(hx0 + 33, hy0 + 12, 1, 1, "#cfe6ff"); this.px(hx0 + 32, hy0 + 13, 3, 2, "#7fb4ff"); this.px(hx0 + 33, hy0 + 15, 1, 1, "#7fb4ff");
       }
 
       // météo et premier plan devant le héros
@@ -378,9 +169,8 @@
   window.NOTE_COLORS = NOTE_COLORS;
   window.drawHeroIcon = function (canvas, scale) {
     const ctx = canvas.getContext("2d");
-    canvas.width = 32 * scale; canvas.height = 32 * scale;
+    canvas.width = 40 * scale; canvas.height = 40 * scale;
     ctx.imageSmoothingEnabled = false;
-    drawRows(ctx, BODY, 5 * scale, 1 * scale, scale);
-    drawRows(ctx, OCA, 5 * scale, (1 + OCA_Y) * scale, scale);
+    drawHero(ctx, heroGrid("default", "idle", false), 0, 3 * scale, scale, PAL, 37);
   };
 })();
